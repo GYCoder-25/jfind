@@ -189,6 +189,23 @@
     }
     .fresh-badge { background: #0dcaf0; color: #000; }
 
+    /* ===== SOURCE BADGE ===== */
+    .source-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .source-linkedin  { background: #0a66c2; color: #fff; }
+    .source-indeed    { background: #2164f3; color: #fff; }
+    .source-glassdoor { background: #0caa41; color: #fff; }
+    .source-ziprecruiter { background: #4a154b; color: #fff; }
+    .source-other     { background: #495057; color: #fff; }
+
     /* ===== STATUS BADGES ===== */
     .status-badge {
       font-size: 11px;
@@ -1564,6 +1581,18 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     resultsDiv.innerHTML = header + cardsHtml;
   }
 
+  function buildSourceBadge(publisher) {
+    if (!publisher) return '';
+    const p = publisher.toLowerCase();
+    let cls, icon, label;
+    if (p.includes('linkedin'))       { cls = 'source-linkedin';    icon = 'fab fa-linkedin';    label = 'LinkedIn'; }
+    else if (p.includes('indeed'))    { cls = 'source-indeed';      icon = 'fas fa-briefcase';   label = 'Indeed'; }
+    else if (p.includes('glassdoor')) { cls = 'source-glassdoor';   icon = 'fas fa-door-open';   label = 'Glassdoor'; }
+    else if (p.includes('ziprecruiter')) { cls = 'source-ziprecruiter'; icon = 'fas fa-bolt';    label = 'ZipRecruiter'; }
+    else { cls = 'source-other'; icon = 'fas fa-globe'; label = publisher; }
+    return `<span class="source-badge ${cls}"><i class="${icon}"></i>${escapeHtml(label)}</span>`;
+  }
+
   function buildJobCard(job, cacheIdx) {
     const { flags, signals } = scoreJob(job);
     const salary = formatSalary(job);
@@ -1598,6 +1627,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
         <div class="job-card-meta">
           ${postedText ? `<span><i class="far fa-clock me-1"></i>${escapeHtml(postedText)}</span>` : ''}
           ${salaryBadge}
+          ${buildSourceBadge(job.job_publisher)}
         </div>
         ${(flagBadges || signalBadges) ? `<div class="job-card-badges">${flagBadges}${signalBadges}</div>` : ''}
         ${desc ? `<div class="job-card-desc">${escapeHtml(desc)}${job.job_description && job.job_description.length > 200 ? '...' : ''}</div>` : ''}
@@ -1635,6 +1665,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const quickParts = [];
     if (salary) quickParts.push(`<span class="job-card-salary"><i class="fas fa-dollar-sign me-1"></i>${escapeHtml(salary)}</span>`);
     if (posted) quickParts.push(`<span style="font-size:12px;color:var(--muted);"><i class="far fa-clock me-1"></i>${escapeHtml(posted)}</span>`);
+    const srcBadge = buildSourceBadge(job.job_publisher);
+    if (srcBadge) quickParts.push(srcBadge);
     flags.forEach(f => quickParts.push(`<span class="flag-badge"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(f)}</span>`));
     signals.forEach(s => {
       const extra = s === 'Fresh posting' ? ' fresh-badge' : '';
