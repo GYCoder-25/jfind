@@ -189,6 +189,24 @@
     }
     .fresh-badge { background: #0dcaf0; color: #000; }
 
+    /* ===== SEEN CARD ===== */
+    .job-card.seen-card {
+      opacity: 0.52;
+      border-left: 3px solid #adb5bd;
+    }
+    .job-card.seen-card:hover { opacity: 0.78; }
+    .seen-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 20px;
+      background: #adb5bd;
+      color: #fff;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
     /* ===== SOURCE BADGE ===== */
     .source-badge {
       font-size: 11px;
@@ -647,6 +665,13 @@
               </div>
             </div>
           </div>
+          <div class="d-flex align-items-center gap-3 mb-2" style="font-size:13px;">
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" id="hideSeenToggle" onchange="applyHideSeenFilter()">
+              <label class="form-check-label" for="hideSeenToggle" style="color:var(--muted);">Hide seen jobs</label>
+            </div>
+            <span id="seenCountLabel" style="color:var(--muted);display:none;"></span>
+          </div>
         </div>
 
         <div id="searchResults">
@@ -962,6 +987,10 @@
   const SEARCH_RESULTS_CACHE = {};
   // Gemini round-robin key index
   let GEMINI_KEY_INDEX = 0;
+  // Seen jobs — stored in saved-jobs.json alongside SAVED_JOBS
+  let SEEN_JOB_IDS = new Set();         // fast O(1) lookup
+  let SEEN_PENDING_WRITE = false;       // debounce: batch writes instead of one per card open
+  let SEEN_WRITE_TIMER = null;
 
   // Default settings (no credentials hardcoded — enter in Settings tab on first run)
   const DEFAULT_SETTINGS = {
@@ -1320,6 +1349,11 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       if (result.content && Array.isArray(result.content.jobs)) {
         SAVED_JOBS = result.content.jobs;
         SAVED_JOBS_SHA = result.sha;
+        // Load seen job IDs (cross-device sync)
+        if (Array.isArray(result.content.seenJobIds)) {
+          SEEN_JOB_IDS = new Set(result.content.seenJobIds);
+          updateSeenCountLabel();
+        }
       } else {
         SAVED_JOBS = [];
         SAVED_JOBS_SHA = result.sha; // null if 404
@@ -1579,6 +1613,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     jobs.forEach((job, idx) => { SEARCH_RESULTS_CACHE[idx] = job; });
     const cardsHtml = jobs.map((job, idx) => buildJobCard(job, idx)).join('');
     resultsDiv.innerHTML = header + cardsHtml;
+    // Re-apply hide-seen filter if toggle is on (new results need filtering too)
+    applyHideSeenFilter();
   }
 
   function buildSourceBadge(publisher) {
@@ -1614,11 +1650,16 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       return `<span class="signal-badge${extra}"><i class="fas fa-check me-1"></i>${escapeHtml(s)}</span>`;
     }).join('');
 
+    // Seen state — applied at card-build time so returning to search results shows correct state
+    const isSeen = SEEN_JOB_IDS.has(job.job_id);
+    const seenClass = isSeen ? ' seen-card' : '';
+    const seenBadge = isSeen ? ' <span class="seen-badge"><i class="fas fa-eye"></i>Seen</span>' : '';
+
     // Use cache index in onclick — avoids embedding arbitrary JSON in HTML attributes
     return `
-      <div class="job-card">
+      <div class="job-card${seenClass}" data-job-id="${escapeHtml(job.job_id || '')}">
         <div class="job-card-title">
-          <span class="job-card-title-link" onclick="openJobDetail(${cacheIdx})">${escapeHtml(job.job_title || 'Untitled')}</span>
+          <span class="job-card-title-link" onclick="openJobDetail(${cacheIdx})">${escapeHtml(job.job_title || 'Untitled')}</span>${seenBadge}
         </div>
         <div class="job-card-company">
           <i class="fas fa-building me-1" style="color:var(--muted);"></i>${escapeHtml(job.employer_name || 'Unknown Company')}
@@ -1651,6 +1692,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const job = SEARCH_RESULTS_CACHE[cacheIdx];
     if (!job) return;
     MODAL_CURRENT_JOB_IDX = cacheIdx;
+    markJobSeen(job.job_id);
 
     // Title & meta
     document.getElementById('modalJobTitle').textContent = job.job_title || 'Untitled';
@@ -2103,9 +2145,11 @@ MATCH SCORE: [X/10]
   }
 
   async function saveSavedJobs() {
+    // Cancel any pending seen-only write — this write already includes seenJobIds
+    if (SEEN_WRITE_TIMER) { clearTimeout(SEEN_WRITE_TIMER); SEEN_WRITE_TIMER = null; }
     SAVED_JOBS_SHA = await githubWriteWithRetry(
       'saved-jobs.json',
-      { jobs: SAVED_JOBS, lastUpdated: new Date().toISOString() },
+      { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), lastUpdated: new Date().toISOString() },
       SAVED_JOBS_SHA
     );
     if (CURRENT_TAB === 'saved') renderSavedJobs();
@@ -2120,6 +2164,61 @@ MATCH SCORE: [X/10]
       badge.style.display = 'inline-block';
     } else {
       badge.style.display = 'none';
+    }
+  }
+
+  // ============================================================
+  //  SEEN JOBS
+  // ============================================================
+
+  function markJobSeen(jobId) {
+    if (!jobId || SEEN_JOB_IDS.has(jobId)) return; // already seen, no-op
+    SEEN_JOB_IDS.add(jobId);
+    // Update card styling immediately in DOM (no reload needed)
+    document.querySelectorAll('.job-card[data-job-id="' + jobId + '"]').forEach(card => {
+      card.classList.add('seen-card');
+      const titleEl = card.querySelector('.job-card-title');
+      if (titleEl && !titleEl.querySelector('.seen-badge')) {
+        titleEl.insertAdjacentHTML('beforeend', ' <span class="seen-badge"><i class="fas fa-eye"></i>Seen</span>');
+      }
+    });
+    updateSeenCountLabel();
+    // Debounced write — batch multiple quick opens into one GitHub write (5 second delay)
+    if (SEEN_WRITE_TIMER) clearTimeout(SEEN_WRITE_TIMER);
+    SEEN_WRITE_TIMER = setTimeout(() => {
+      saveSeenJobs();
+    }, 5000);
+  }
+
+  async function saveSeenJobs() {
+    try {
+      SAVED_JOBS_SHA = await githubWriteWithRetry(
+        'saved-jobs.json',
+        { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), lastUpdated: new Date().toISOString() },
+        SAVED_JOBS_SHA
+      );
+    } catch(e) {
+      console.error('[JFIND saveSeenJobs]', e);
+    }
+  }
+
+  function applyHideSeenFilter() {
+    const hide = document.getElementById('hideSeenToggle').checked;
+    document.querySelectorAll('.job-card').forEach(card => {
+      if (card.classList.contains('seen-card')) {
+        card.style.display = hide ? 'none' : '';
+      }
+    });
+  }
+
+  function updateSeenCountLabel() {
+    const label = document.getElementById('seenCountLabel');
+    if (!label) return;
+    if (SEEN_JOB_IDS.size > 0) {
+      label.textContent = SEEN_JOB_IDS.size + ' seen';
+      label.style.display = 'inline';
+    } else {
+      label.style.display = 'none';
     }
   }
 
