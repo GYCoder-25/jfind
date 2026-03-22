@@ -871,8 +871,9 @@
           <div id="modalGeminiSection" style="padding:16px 20px;border-bottom:1px solid var(--border);display:none;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
               <i class="fas fa-robot" style="color:var(--primary);"></i>
-              <span style="font-weight:700;font-size:14px;color:var(--dark);">AI Quick Take</span>
+              <span style="font-weight:700;font-size:14px;color:var(--dark);">AI Analysis</span>
               <span id="modalGeminiSpinner" class="spinner-border spinner-border-sm ms-1" style="color:var(--primary);display:none;"></span>
+              <span style="font-size:11px;color:var(--muted);margin-left:auto;">legitimacy · fit · keywords</span>
             </div>
             <div id="modalGeminiOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
           </div>
@@ -1596,29 +1597,49 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       return;
     }
 
-    const prompt = `You are a job search advisor helping a candidate quickly evaluate a job posting.
+    const fullJD = (job.job_description || '').substring(0, 4000);
+    const salary = formatSalary(job);
+    const posted = formatPostedDate(job);
 
-JOB TITLE: ${job.job_title}
-COMPANY: ${job.employer_name}
-LOCATION: ${[job.job_city, job.job_state].filter(Boolean).join(', ')}
-JOB DESCRIPTION (first 1500 chars):
-${(job.job_description || '').substring(0, 1500)}
+    const prompt = `You are a brutally honest job search analyst helping a busy professional decide in 30 seconds whether a job posting is worth their time. Be direct. No filler. No corporate speak.
 
-Provide a BRIEF analysis in exactly this format (3-4 lines max per section, be concise):
+CANDIDATE PROFILE:
+- 5+ years at Techstyle Fashion Group (Fabletics) as Operations Lead & self-taught Full-Stack Developer
+- Built production CRM managing 44,000+ orders, eliminated 3,000+ hrs/year manual work
+- Target roles: Project Manager, Operations Manager, Marketing Operations, Technical PM
+- Location: San Diego CA (open to hybrid/remote)
+- Salary target: $70,000+
 
-🏢 COMPANY SNAPSHOT
-[1-2 sentences: what the company does, industry, size/stage if known]
+JOB POSTING:
+Title: ${job.job_title || 'N/A'}
+Company: ${job.employer_name || 'N/A'}
+Location: ${[job.job_city, job.job_state, job.job_country].filter(Boolean).join(', ') || 'N/A'}
+Salary listed: ${salary || 'NOT LISTED'}
+Posted: ${posted || 'unknown'}
+Publisher/Source: ${job.job_publisher || 'N/A'}
+Direct application: ${job.job_apply_is_direct ? 'YES' : 'NO'}
 
-✅ WHY APPLY
-[2-3 bullet points: genuine reasons this role fits a PM/Ops candidate with 5+ years cross-functional experience]
+FULL JOB DESCRIPTION:
+${fullJD}
 
-⚠️ WATCH OUT
-[1-2 bullet points: red flags or concerns from the JD itself]
+---
 
-🎯 KEY SKILLS TO EMPHASIZE
-[2-3 specific skills/keywords from this JD to highlight in resume]
+Analyze this posting and respond in EXACTLY this format. Do not add extra sections. Do not skip any section.
 
-Keep it tight. No filler. Be honest about concerns.`;
+LEGITIMACY SCORE: [X/10]
+[One sentence explaining the score. 10 = clearly real company, specific role, salary posted, direct apply. 1 = ghost job, agency spam, vague, no salary. Be specific about what lowered the score.]
+
+🏢 COMPANY
+[2-3 sentences. What does this company actually do? Industry, size, stage if known. If you don't recognize the company, say so honestly — don't invent details.]
+
+✅ APPLY IF
+[2-3 bullets. Specific, honest reasons this role fits the candidate profile above. Only include if genuinely relevant.]
+
+⚠️ SKIP IF
+[2-3 bullets. Specific red flags from THIS job description — vague responsibilities, no salary, agency posting, role mismatch, unrealistic requirements, signs of a ghost job or bait-and-switch.]
+
+🎯 KEYWORDS TO USE
+[3-5 exact words/phrases from this JD that should appear in the tailored resume. Just the keywords, comma-separated.]`;
 
     try {
       const response = await fetch(
@@ -1628,7 +1649,7 @@ Keep it tight. No filler. Be honest about concerns.`;
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 600 }
+            generationConfig: { temperature: 0.3, maxOutputTokens: 1200 }
           })
         }
       );
@@ -1637,16 +1658,37 @@ Keep it tight. No filler. Be honest about concerns.`;
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       if (!text) throw new Error('No output');
 
-      // Render with light formatting: bold section headers, bullets as styled divs
-      const html = text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/(🏢 COMPANY SNAPSHOT|✅ WHY APPLY|⚠️ WATCH OUT|🎯 KEY SKILLS TO EMPHASIZE)/g,
-          '<strong style="display:block;margin-top:10px;margin-bottom:4px;font-size:13px;color:var(--dark);">$1</strong>')
-        .replace(/\n• /g, '\n<div class="modal-gemini-bullet">• ')
-        .replace(/\n- /g, '\n<div class="modal-gemini-bullet">• ')
+      // Parse and render with score prominently displayed
+      const escaped = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      // Extract legitimacy score for color coding
+      const scoreMatch = text.match(/LEGITIMACY SCORE:\s*(\d+)/i);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+      const scoreColor = score === null ? '#6c757d' :
+                         score >= 7 ? '#198754' :
+                         score >= 4 ? '#fd7e14' : '#dc3545';
+      const scoreLabel = score === null ? '' :
+                         score >= 7 ? 'Worth applying' :
+                         score >= 4 ? 'Proceed with caution' : 'Likely not worth it';
+
+      // Build rendered HTML
+      let html = escaped
+        // Score line — make it a big badge
+        .replace(/LEGITIMACY SCORE:\s*(\d+)\/10\s*/i, (match, n) =>
+          `<div style="margin-bottom:12px;">
+            <span style="font-size:22px;font-weight:800;color:${scoreColor};">${n}/10</span>
+            <span style="font-size:13px;font-weight:600;color:${scoreColor};margin-left:8px;">${scoreLabel}</span>
+          </div>`)
+        // Section headers
+        .replace(/(🏢 COMPANY|✅ APPLY IF|⚠️ SKIP IF|🎯 KEYWORDS TO USE)/g,
+          '<strong style="display:block;margin-top:14px;margin-bottom:5px;font-size:13px;color:var(--dark);border-top:1px solid var(--border);padding-top:10px;">$1</strong>')
+        // Bullets
+        .replace(/\n[•\-\*] /g, '\n<div class="modal-gemini-bullet">')
+        // Line breaks
         .split('\n').join('<br>');
 
-      outputEl.innerHTML = html;
+      outputEl.innerHTML = `<div style="padding:4px 0;">${html}</div>`;
     } catch(e) {
       outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
     } finally {
