@@ -1237,6 +1237,183 @@
 
     }
 
+    /* ===== @MEDIA PRINT — PDF EXPORT ===== */
+    @media print {
+      /* Hide everything by default */
+      body > * { display: none !important; }
+      /* Show only the active PDF renderer */
+      #pdf-resume-render,
+      #pdf-cover-render { display: none !important; } /* overridden below when active */
+    }
+    /* JS sets PRINT_MODE before calling window.print() */
+    /* These classes are added/removed by injectAndPrint() */
+    @media print {
+      body.printing-resume #pdf-resume-render { display: block !important; }
+      body.printing-cover  #pdf-cover-render  { display: block !important; }
+      body.printing-resume > *:not(#pdf-resume-render) { display: none !important; }
+      body.printing-cover  > *:not(#pdf-cover-render)  { display: none !important; }
+      @page { margin: 0.75in; size: letter; }
+    }
+
+    /* ===== RESUME PDF RENDERER STYLES ===== */
+    #pdf-resume-render,
+    #pdf-cover-render {
+      display: none; /* hidden on screen — only shown at print time */
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.4;
+      color: #000;
+      max-width: 100%;
+      background: white;
+    }
+
+    .rv-name {
+      text-align: center;
+      font-size: 22pt;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      color: #000;
+    }
+
+    .rv-contact {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px 24px;
+      font-size: 9pt;
+      color: #444;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .rv-contact-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+
+    .rv-contact-item i {
+      font-size: 8pt;
+      color: #555;
+    }
+
+    .rv-section {
+      font-size: 10pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin: 14px 0 3px 0;
+      padding-bottom: 3px;
+      border-bottom: 1.5px solid #000;
+      color: #000;
+    }
+
+    .rv-job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 8px 0 1px 0;
+    }
+
+    .rv-job-title {
+      font-weight: 700;
+      font-size: 10pt;
+      color: #000;
+    }
+
+    .rv-job-date {
+      font-size: 9pt;
+      color: #333;
+      white-space: nowrap;
+      margin-left: 12px;
+    }
+
+    .rv-company {
+      color: #5b6e8a;
+      font-size: 9pt;
+      margin: 0 0 4px 0;
+    }
+
+    .rv-bullets {
+      margin: 3px 0 6px 0;
+      padding-left: 16px;
+      list-style-type: disc;
+    }
+
+    .rv-bullets li {
+      margin-bottom: 2px;
+      font-size: 9.5pt;
+      line-height: 1.4;
+    }
+
+    .rv-text {
+      font-size: 9.5pt;
+      margin: 2px 0;
+    }
+
+    .rv-cert-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px 20px;
+      margin-top: 5px;
+      font-size: 9pt;
+    }
+
+    .rv-cert-item-title { font-weight: 600; }
+    .rv-cert-item-sub { color: #555; font-size: 8.5pt; }
+
+    .rv-skills-group {
+      margin-bottom: 6px;
+    }
+
+    .rv-skills-group-label {
+      font-weight: 600;
+      font-size: 9.5pt;
+      margin-bottom: 2px;
+    }
+
+    .rv-skills-cols {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px 8px;
+      font-size: 9pt;
+    }
+
+    .rv-skills-cols li {
+      list-style: disc;
+      margin-left: 14px;
+      font-size: 9pt;
+    }
+
+    /* ===== COVER LETTER PDF RENDERER STYLES ===== */
+    .cl-date {
+      font-size: 10pt;
+      color: #333;
+      margin-bottom: 14px;
+    }
+
+    .cl-job-ref {
+      font-size: 9.5pt;
+      color: #555;
+      margin-bottom: 4px;
+      font-style: italic;
+    }
+
+    .cl-divider {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 16px;
+    }
+
+    .cl-para {
+      font-size: 10.5pt;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      color: #000;
+    }
+
   </style>
 
 </head>
@@ -1525,11 +1702,17 @@
 
               <label class="form-label fw-semibold small mb-0">Tailored Resume</label>
 
-              <div style="display:flex;gap:6px;" id="tailorOutputActions" style="display:none;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;" id="tailorOutputActions">
 
                 <button class="btn btn-sm btn-outline-custom" onclick="copyTailoredResume()" id="copyTailoredBtn" style="display:none;">
 
                   <i class="fas fa-copy me-1"></i>Copy
+
+                </button>
+
+                <button class="btn btn-sm btn-outline-secondary" onclick="downloadResumeAsPdf()" id="downloadResumePdfBtn" style="display:none;">
+
+                  <i class="fas fa-file-pdf me-1"></i>Download PDF
 
                 </button>
 
@@ -1595,6 +1778,45 @@
 
         <div id="tailorErrorMsg" style="display:none;" class="alert alert-danger mt-2 small"></div>
 
+        <!-- ===== COVER LETTER SECTION ===== -->
+        <div id="coverLetterSection" class="mt-4 pt-3" style="border-top: 1px solid var(--border);">
+
+          <div class="tailor-output-header mb-2">
+            <div>
+              <label class="form-label fw-semibold small mb-0">Cover Letter</label>
+              <div class="text-muted" style="font-size:12px;">Gemini generates a tailored 3-paragraph letter (≤200 words)</div>
+            </div>
+            <div style="display:none;" id="coverLetterActions">
+              <button class="btn btn-sm btn-outline-custom" onclick="copyCoverLetter()">
+                <i class="fas fa-copy me-1"></i>Copy
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="downloadCoverLetterAsPdf()">
+                <i class="fas fa-file-pdf me-1"></i>Download PDF
+              </button>
+            </div>
+          </div>
+
+          <div id="coverLetterOutputArea" style="min-height:120px;">
+            <div class="empty-state" style="padding:24px 20px;">
+              <i class="fas fa-envelope-open-text d-block mb-2"></i>
+              <p style="font-size:13px;">Cover letter will appear here after generation.</p>
+            </div>
+          </div>
+
+          <div id="coverLetterLoading" style="display:none;text-align:center;padding:8px 0;color:var(--muted);font-size:13px;">
+            <span class="spinner-border spinner-border-sm me-2" style="color:var(--primary);"></span>
+            Gemini is writing your cover letter...
+          </div>
+
+          <div id="coverLetterErrorMsg" style="display:none;" class="alert alert-danger mt-2 small"></div>
+
+          <button class="btn btn-outline-custom mt-2" onclick="generateCoverLetter()" id="coverLetterBtn"
+                  style="width:100%;justify-content:center;">
+            <i class="fas fa-envelope me-2"></i>Generate Cover Letter
+          </button>
+
+        </div>
+
       </div>
 
     </div>
@@ -1625,11 +1847,17 @@
 
 
 
-        <div class="mt-3 d-flex gap-2">
+        <div class="mt-3 d-flex gap-2 flex-wrap">
 
           <button class="btn btn-primary-custom" onclick="saveResume()" id="saveResumeBtn">
 
             <i class="fas fa-save me-2"></i>Save to GitHub
+
+          </button>
+
+          <button class="btn btn-outline-secondary" onclick="downloadResumeAsPdf()">
+
+            <i class="fas fa-file-pdf me-1"></i>Download PDF
 
           </button>
 
@@ -2200,6 +2428,10 @@
   // ============================================================
 
   let SETTINGS = {};
+
+  let PRINT_MODE = null; // 'resume' or 'cover'
+
+  let CURRENT_COVER_LETTER_TEXT = null; // stores last generated cover letter
 
   let SAVED_JOBS = [];
 
@@ -6551,6 +6783,8 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
       document.getElementById('copyTailoredBtn').style.display = 'inline-block';
 
+      document.getElementById('downloadResumePdfBtn').style.display = 'inline-block';
+
       document.getElementById('markAppliedBtn').style.display = 'inline-block';
 
       if (job.applyLink) {
@@ -6564,6 +6798,22 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
     } else {
 
       clearTailorOutput();
+
+    }
+
+    // Restore cover letter if previously generated
+
+    if (job.coverLetter) {
+
+      CURRENT_COVER_LETTER_TEXT = job.coverLetter;
+
+      const outputEl = document.getElementById('coverLetterOutputArea');
+
+      const actionsEl = document.getElementById('coverLetterActions');
+
+      if (outputEl) outputEl.innerHTML = `<pre class="tailor-pre">${escapeHtml(job.coverLetter)}</pre>`;
+
+      if (actionsEl) actionsEl.style.display = 'flex';
 
     }
 
@@ -6587,11 +6837,22 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
     document.getElementById('copyTailoredBtn').style.display = 'none';
 
+    document.getElementById('downloadResumePdfBtn').style.display = 'none';
+
     document.getElementById('markAppliedBtn').style.display = 'none';
 
     document.getElementById('tailorApplyLink').style.display = 'none';
 
     document.getElementById('tailorErrorMsg').style.display = 'none';
+
+    // Reset cover letter section (prevents stale letter from previous job showing)
+    CURRENT_COVER_LETTER_TEXT = null;
+    const clOutput = document.getElementById('coverLetterOutputArea');
+    if (clOutput) clOutput.innerHTML = '<div class="empty-state" style="padding:24px 20px;"><i class="fas fa-envelope-open-text d-block mb-2"></i><p style="font-size:13px;">Cover letter will appear here after generation.</p></div>';
+    const clActions = document.getElementById('coverLetterActions');
+    if (clActions) clActions.style.display = 'none';
+    const clErr = document.getElementById('coverLetterErrorMsg');
+    if (clErr) clErr.style.display = 'none';
 
   }
 
@@ -6630,6 +6891,8 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
     errorMsg.style.display = 'none';
 
     document.getElementById('copyTailoredBtn').style.display = 'none';
+
+    document.getElementById('downloadResumePdfBtn').style.display = 'none';
 
     document.getElementById('markAppliedBtn').style.display = 'none';
 
@@ -6674,6 +6937,8 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
 
       document.getElementById('copyTailoredBtn').style.display = 'inline-block';
+
+      document.getElementById('downloadResumePdfBtn').style.display = 'inline-block';
 
       showToast('Resume tailored ✓', 'success');
 
@@ -6893,6 +7158,690 @@ Return the full tailored resume now:`;
 
   // ============================================================
 
+  //  PDF / PRINT INFRASTRUCTURE
+
+  // ============================================================
+
+  function injectAndPrint(html, mode) {
+
+    PRINT_MODE = mode;
+
+    const el = document.getElementById('pdf-' + mode + '-render');
+
+    if (!el) { showToast('PDF renderer not ready', 'danger'); PRINT_MODE = null; return; }
+
+    el.innerHTML = html;
+
+    document.body.classList.add('printing-' + mode);
+
+    setTimeout(() => {
+
+      window.print();
+
+      setTimeout(() => {
+
+        el.innerHTML = '';
+
+        document.body.classList.remove('printing-' + mode);
+
+        PRINT_MODE = null;
+
+      }, 800);
+
+    }, 100);
+
+  }
+
+
+
+  // ============================================================
+
+  //  RESUME HTML RENDERER + PDF DOWNLOAD
+
+  // ============================================================
+
+  function getCleanResumeText() {
+
+    // Priority: tailored output if on tailor tab and output exists
+
+    const pre = document.querySelector('#tailorOutputArea .tailor-pre');
+
+    if (pre) {
+
+      // Strip [CHANGED] tags, return clean text
+
+      return pre.innerText.replace(/\[CHANGED\]/g, '').replace(/\[\/CHANGED\]/g, '').trim();
+
+    }
+
+    // Fallback: master resume
+
+    return (RESUME_CONTENT || DEFAULT_RESUME || '').trim();
+
+  }
+
+
+
+  function renderResumeHtml(text) {
+
+    if (!text) return '';
+
+    try {
+
+      const lines = text.split('\n');
+
+      let html = '<div class="rv-wrap">';
+
+      let i = 0;
+
+      // Helper: skip blank lines
+
+      const skipBlanks = () => { while (i < lines.length && !lines[i].trim()) i++; };
+
+      // ---- NAME (first non-blank line) ----
+
+      skipBlanks();
+
+      if (i < lines.length) {
+
+        html += `<div class="rv-name">${escapeHtml(lines[i].trim())}</div>`;
+
+        i++;
+
+      }
+
+      // ---- CONTACT BLOCK (next up to 4 non-blank lines before first === divider) ----
+
+      const contactItems = [];
+
+      while (i < lines.length && !/^={5,}/.test(lines[i])) {
+
+        const ln = lines[i].trim();
+
+        if (ln) {
+
+          // Split line on 2+ spaces to get multiple items per line
+
+          const parts = ln.split(/\s{2,}/);
+
+          parts.forEach(part => {
+
+            const p = part.trim();
+
+            if (!p) return;
+
+            let icon = 'fa-circle';
+
+            if (/@/.test(p)) icon = 'fa-envelope';
+
+            else if (/^\(?\d{3}\)?[\s\-]\d{3}[\s\-]\d{4}$/.test(p)) icon = 'fa-phone';
+
+            else if (/linkedin\.com/i.test(p)) icon = 'fa-linkedin';
+
+            else if (/riocreations\.net|\.com|\.net|\.io/i.test(p) && !/@/.test(p)) icon = 'fa-globe';
+
+            else if (/\b(CA|NY|TX|FL|WA|OR|AZ|CO|IL|GA|NC|VA|NV|OH|PA|MA|MN|MI|WI|TN|MO|IN|UT|NM|SC|KY|AL|LA|MS|AR|IA|KS|NE|SD|ND|MT|WY|ID|AK|HI|ME|VT|NH|CT|RI|DE|MD|DC)\b/.test(p)) icon = 'fa-map-marker-alt';
+
+            else if (/San Diego|Los Angeles|New York|Chicago|Seattle|Austin|Denver|Atlanta|Phoenix|Houston/i.test(p)) icon = 'fa-map-marker-alt';
+
+            contactItems.push(`<span class="rv-contact-item"><i class="fas ${icon}"></i>${escapeHtml(p)}</span>`);
+
+          });
+
+        }
+
+        i++;
+
+      }
+
+      if (contactItems.length) {
+
+        html += `<div class="rv-contact">${contactItems.join('')}</div>`;
+
+      }
+
+      // ---- SECTIONS ----
+
+      let inBullets = false;
+
+      let inJobBlock = false;
+
+      let inCertGrid = false;
+
+      let certBuffer = [];
+
+      let currentSection = '';
+
+      const closeBullets = () => {
+
+        if (inBullets) { html += '</ul>'; inBullets = false; }
+
+      };
+
+      const closeCertGrid = () => {
+
+        if (inCertGrid) {
+
+          // flush remaining certBuffer
+
+          if (certBuffer.length) {
+
+            html += '<div class="rv-cert-row">';
+
+            certBuffer.forEach(c => html += `<div class="rv-cert-item">${c}</div>`);
+
+            html += '</div>';
+
+            certBuffer = [];
+
+          }
+
+          html += '</div>'; // close rv-cert-grid
+
+          inCertGrid = false;
+
+        }
+
+      };
+
+      while (i < lines.length) {
+
+        const raw = lines[i];
+
+        const ln = raw.trim();
+
+        i++;
+
+        // Section divider (===)
+
+        if (/^={5,}/.test(ln)) {
+
+          closeBullets();
+
+          closeCertGrid();
+
+          inJobBlock = false;
+
+          // Next non-blank line is section header
+
+          skipBlanks();
+
+          if (i < lines.length && !/^={5,}/.test(lines[i]) && !/^-{5,}/.test(lines[i])) {
+
+            currentSection = lines[i].trim().toUpperCase();
+
+            html += `<h2 class="rv-section">${escapeHtml(lines[i].trim())}</h2>`;
+
+            i++;
+
+          }
+
+          continue;
+
+        }
+
+        // Job separator (--)
+
+        if (/^-{5,}/.test(ln)) {
+
+          closeBullets();
+
+          closeCertGrid();
+
+          if (inJobBlock) { html += '</div>'; inJobBlock = false; }
+
+          html += '<div class="rv-job-gap"></div>';
+
+          continue;
+
+        }
+
+        // Blank line
+
+        if (!ln) {
+
+          closeBullets();
+
+          continue;
+
+        }
+
+        // CERTIFICATES section — pair items into grid
+
+        if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
+
+          closeBullets();
+
+          if (!inCertGrid) { html += '<div class="rv-cert-grid">'; inCertGrid = true; }
+
+          // bullet or plain line
+
+          const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
+
+          certBuffer.push(escapeHtml(certText));
+
+          if (certBuffer.length === 2) {
+
+            html += '<div class="rv-cert-row">';
+
+            certBuffer.forEach(c => html += `<div class="rv-cert-item">${c}</div>`);
+
+            html += '</div>';
+
+            certBuffer = [];
+
+          }
+
+          continue;
+
+        }
+
+        // SKILLS section — group bullets under label
+
+        if (currentSection === 'SKILLS' && ln.startsWith('•')) {
+
+          closeCertGrid();
+
+          // Skills bullets: try to detect label (text before colon on first bullet)
+
+          const skillText = ln.slice(1).trim();
+
+          const colonIdx = skillText.indexOf(':');
+
+          if (colonIdx > 0) {
+
+            closeBullets();
+
+            const label = skillText.substring(0, colonIdx).trim();
+
+            const vals = skillText.substring(colonIdx + 1).trim();
+
+            html += `<div class="rv-skills-group"><span class="rv-skills-label">${escapeHtml(label)}:</span><div class="rv-skills-cols">${escapeHtml(vals)}</div></div>`;
+
+          } else {
+
+            if (!inBullets) { html += '<ul class="rv-bullets">'; inBullets = true; }
+
+            html += `<li>${escapeHtml(skillText)}</li>`;
+
+          }
+
+          continue;
+
+        }
+
+        // Bullet line
+
+        if (ln.startsWith('•')) {
+
+          closeCertGrid();
+
+          if (!inBullets) { html += '<ul class="rv-bullets">'; inBullets = true; }
+
+          html += `<li>${escapeHtml(ln.slice(1).trim())}</li>`;
+
+          continue;
+
+        }
+
+        closeBullets();
+
+        closeCertGrid();
+
+        // Job title + date (title ... lots of spaces ... date)
+
+        if (/^[A-Za-z].+\s{3,}\w.+\d{4}/.test(ln)) {
+
+          const parts = ln.split(/\s{3,}/);
+
+          const title = parts[0].trim();
+
+          const date = parts.slice(1).join(' ').trim();
+
+          if (inJobBlock) { html += '</div>'; }
+
+          html += '<div class="rv-job-block">';
+
+          inJobBlock = true;
+
+          html += `<div class="rv-job-header"><span class="rv-job-title">${escapeHtml(title)}</span><span class="rv-job-date">${escapeHtml(date)}</span></div>`;
+
+          // Peek: next non-blank line — if not a bullet, it's company name
+
+          const savedI = i;
+
+          while (i < lines.length && !lines[i].trim()) i++;
+
+          if (i < lines.length && !lines[i].trim().startsWith('•') && !/^[=\-]{5,}/.test(lines[i])) {
+
+            html += `<div class="rv-company">${escapeHtml(lines[i].trim())}</div>`;
+
+            i++;
+
+          } else {
+
+            i = savedI; // nothing consumed for company
+
+          }
+
+          continue;
+
+        }
+
+        // All other non-blank lines
+
+        html += `<p class="rv-text">${escapeHtml(ln)}</p>`;
+
+      }
+
+      // Close any open structures
+
+      closeBullets();
+
+      closeCertGrid();
+
+      if (inJobBlock) html += '</div>';
+
+      html += '</div>'; // close rv-wrap
+
+      return html;
+
+    } catch(e) {
+
+      console.error('renderResumeHtml error:', e);
+
+      return `<pre style="font-family:inherit;white-space:pre-wrap;">${escapeHtml(text)}</pre>`;
+
+    }
+
+  }
+
+
+
+  function downloadResumeAsPdf() {
+
+    const text = getCleanResumeText();
+
+    if (!text) { showToast('No resume to download', 'warning'); return; }
+
+    const html = renderResumeHtml(text);
+
+    injectAndPrint(html, 'resume');
+
+  }
+
+
+
+  // ============================================================
+
+  //  COVER LETTER GENERATION + PDF DOWNLOAD
+
+  // ============================================================
+
+  async function generateCoverLetter() {
+
+    const jobTitle = document.getElementById('tailorJobTitle').value.trim();
+
+    const company = document.getElementById('tailorCompany').value.trim();
+
+    const jd = document.getElementById('tailorJD').value.trim();
+
+    const resumeText = RESUME_CONTENT || DEFAULT_RESUME || '';
+
+
+
+    if (!jobTitle || !company) {
+
+      showToast('Fill in Job Title and Company first', 'warning');
+
+      return;
+
+    }
+
+
+
+    const btn = document.getElementById('coverLetterBtn');
+
+    const loadingEl = document.getElementById('coverLetterLoading');
+
+    const outputEl = document.getElementById('coverLetterOutputArea');
+
+    const actionsEl = document.getElementById('coverLetterActions');
+
+
+
+    btn.disabled = true;
+
+    if (loadingEl) loadingEl.style.display = 'block';
+
+    if (outputEl) outputEl.innerHTML = '';
+
+    if (actionsEl) actionsEl.style.display = 'none';
+
+
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+
+
+    const prompt = `You are a professional cover letter writer.
+Write a tailored, concise cover letter for this candidate and job.
+
+CANDIDATE BACKGROUND:
+${resumeText.substring(0, 3000)}
+
+JOB TITLE: ${jobTitle}
+COMPANY: ${company}
+JOB DESCRIPTION:
+${jd.substring(0, 2000)}
+
+COVER LETTER REQUIREMENTS:
+1. Three paragraphs, maximum 200 words total (not counting signature)
+2. Paragraph 1 (2-3 sentences): Why THIS company and THIS specific role — reference something concrete from the job description. Show you read it.
+3. Paragraph 2 (3-4 sentences): Core impact statement. Lead with the strongest, most relevant achievement from the resume. If the role involves operations, automation, or project management — lead with: building the full-stack CRM that manages 44,000+ orders, eliminated 3,000+ hours/year of manual work, presented to C-suite. If different focus, use most relevant experience.
+4. Paragraph 3 (1-2 sentences): Forward-looking close — express genuine interest, invite conversation. No "I am excited" or "I am passionate."
+5. Tone: Confident, direct, results-focused. No corporate buzzwords. No "I am excited to apply for this amazing opportunity."
+6. Do NOT include date or address block — just start with the salutation.
+7. End with:
+Best,
+Angelo Moya
+angelo@riocreations.net | linkedin.com/in/angelomoya
+
+OUTPUT: Plain text only. No markdown. Proper paragraph breaks (blank line between paragraphs).
+Start with: Dear Hiring Team,`;
+
+
+
+    try {
+
+      const key = getNextGeminiKey();
+
+      if (!key) throw new Error('No Gemini API key configured');
+
+
+
+      const response = await fetch(
+
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+
+        {
+
+          method: 'POST',
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify({
+
+            contents: [{ parts: [{ text: prompt }] }],
+
+            generationConfig: { temperature: 0.35, maxOutputTokens: 1024 }
+
+          })
+
+        }
+
+      );
+
+
+
+      if (!response.ok) {
+
+        const errText = await response.text().catch(() => '');
+
+        throw new Error(`Gemini ${response.status}: ${errText}`);
+
+      }
+
+
+
+      const data = await response.json();
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!text) throw new Error('Gemini returned no output');
+
+
+
+      CURRENT_COVER_LETTER_TEXT = text.trim();
+
+
+
+      // Render output
+
+      if (outputEl) {
+
+        outputEl.innerHTML = `<pre class="tailor-pre">${escapeHtml(CURRENT_COVER_LETTER_TEXT)}</pre>`;
+
+      }
+
+      if (actionsEl) actionsEl.style.display = 'flex';
+
+
+
+      // Save to current tailor job if one is active
+
+      if (CURRENT_TAILOR_JOB_ID) {
+
+        const job = SAVED_JOBS.find(j => j.id === CURRENT_TAILOR_JOB_ID);
+
+        if (job) {
+
+          job.coverLetter = CURRENT_COVER_LETTER_TEXT;
+
+          saveSavedJobs().catch(e => console.error('Failed to save cover letter:', e));
+
+        }
+
+      }
+
+
+
+      showToast('Cover letter generated ✓', 'success');
+
+
+
+    } catch(e) {
+
+      const msg = handleApiError(e, 'generateCoverLetter');
+
+      const errEl = document.getElementById('coverLetterErrorMsg');
+
+      if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+
+    } finally {
+
+      btn.disabled = false;
+
+      if (loadingEl) loadingEl.style.display = 'none';
+
+    }
+
+  }
+
+
+
+  function copyCoverLetter() {
+
+    if (!CURRENT_COVER_LETTER_TEXT) { showToast('No cover letter to copy', 'warning'); return; }
+
+    navigator.clipboard.writeText(CURRENT_COVER_LETTER_TEXT).then(() => {
+
+      showToast('Cover letter copied! ✓', 'success');
+
+    }).catch(() => {
+
+      const ta = document.createElement('textarea');
+
+      ta.value = CURRENT_COVER_LETTER_TEXT;
+
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+
+      document.body.appendChild(ta);
+
+      ta.focus(); ta.select();
+
+      try { document.execCommand('copy'); showToast('Cover letter copied! ✓', 'success'); }
+
+      catch(e) { showToast('Copy failed — select text manually', 'danger'); }
+
+      ta.remove();
+
+    });
+
+  }
+
+
+
+  function renderCoverLetterHtml(text) {
+
+    if (!text) return '';
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const company = document.getElementById('tailorCompany').value.trim() || 'Hiring Manager';
+
+    const jobTitle = document.getElementById('tailorJobTitle').value.trim() || 'Position';
+
+
+
+    // Split into paragraphs
+
+    const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+
+    const paraHtml = paragraphs.map(p => `<p class="cl-para">${escapeHtml(p.trim()).replace(/\n/g, '<br>')}</p>`).join('');
+
+
+
+    return `
+
+      <div class="cl-date">${today}</div>
+
+      <div class="cl-job-ref">${escapeHtml(jobTitle)} — ${escapeHtml(company)}</div>
+
+      <div class="cl-divider"></div>
+
+      ${paraHtml}
+
+    `;
+
+  }
+
+
+
+  function downloadCoverLetterAsPdf() {
+
+    if (!CURRENT_COVER_LETTER_TEXT) { showToast('Generate a cover letter first', 'warning'); return; }
+
+    const html = renderCoverLetterHtml(CURRENT_COVER_LETTER_TEXT);
+
+    injectAndPrint(html, 'cover');
+
+  }
+
+
+
+  // ============================================================
+
   //  RESUME TAB
 
   // ============================================================
@@ -7092,6 +8041,10 @@ Return the full tailored resume now:`;
   });
 
   </script>
+
+  <!-- ===== PDF RENDER CONTAINERS (hidden on screen, visible at print) ===== -->
+  <div id="pdf-resume-render" aria-hidden="true"></div>
+  <div id="pdf-cover-render" aria-hidden="true"></div>
 
 </body>
 
