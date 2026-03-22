@@ -1007,6 +1007,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
   //  GITHUB API
   // ============================================================
   async function githubRead(filename) {
+    let dataSha = null; // track SHA separately so catch block can return it
     try {
       const url = `${DEFAULT_SETTINGS.githubApi}/repos/${DEFAULT_SETTINGS.githubOwner}/${DEFAULT_SETTINGS.dataRepo}/contents/${filename}`;
       const resp = await fetch(url, {
@@ -1018,13 +1019,18 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       if (resp.status === 404) return { content: null, sha: null };
       if (!resp.ok) throw new Error(`GitHub read ${resp.status}`);
       const data = await resp.json();
-      const raw = atob(data.content.replace(/\n/g, ''));
-      const parsed = JSON.parse(decodeURIComponent(escape(raw)));
-      return { content: parsed, sha: data.sha };
+      dataSha = data.sha; // capture SHA before decode attempt
+      // Use TextDecoder for proper UTF-8 base64 decoding (replaces broken escape() hack)
+      const b64 = data.content.replace(/\n/g, '');
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      const raw = new TextDecoder('utf-8').decode(bytes);
+      const parsed = JSON.parse(raw);
+      return { content: parsed, sha: dataSha };
     } catch(e) {
       if (e.message && e.message.includes('404')) return { content: null, sha: null };
       console.error('[JFIND githubRead]', e);
-      return { content: null, sha: null };
+      // Return SHA even on decode/parse error — prevents 422 on next write
+      return { content: null, sha: dataSha };
     }
   }
 
@@ -1047,7 +1053,11 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       body: JSON.stringify(body)
     });
     if (!resp.ok) {
-      const errText = await resp.text();
+      let errText = '';
+      try { 
+        const errJson = await resp.json();
+        errText = errJson.message || JSON.stringify(errJson);
+      } catch(_) { errText = await resp.text().catch(() => ''); }
       throw new Error(`GitHub write ${resp.status}: ${errText}`);
     }
     const data = await resp.json();
