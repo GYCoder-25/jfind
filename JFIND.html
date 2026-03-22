@@ -484,6 +484,28 @@
       .tailor-two-panel { flex-direction: row; }
     }
 
+    /* ===== JOB DETAIL MODAL ===== */
+    #jobDetailModal .modal-dialog { max-width: 720px; }
+    #modalJobDescription { max-height: 400px; overflow-y: auto; }
+    .modal-gemini-bullet { 
+      padding: 6px 0 6px 12px; 
+      border-left: 3px solid var(--primary); 
+      margin-bottom: 6px; 
+      font-size: 13px;
+    }
+    @media (max-width: 767px) {
+      #jobDetailModal .modal-dialog { margin: 0; max-width: 100%; height: 100%; }
+      #jobDetailModal .modal-content { height: 100%; border-radius: 0; }
+      #modalJobDescription { max-height: none; }
+    }
+    /* Make job card title clickable */
+    .job-card-title-link { 
+      cursor: pointer; 
+      color: var(--dark);
+      text-decoration: none;
+    }
+    .job-card-title-link:hover { color: var(--primary); text-decoration: underline; }
+
     /* ===== APPLY LINK SECTION ===== */
     .apply-link-section {
       background: #f0fdf4;
@@ -831,6 +853,50 @@
     </button>
   </nav>
 
+  <!-- Job Detail Modal -->
+  <div class="modal fade" id="jobDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--dark);color:white;border:none;">
+          <div style="flex:1;min-width:0;">
+            <h5 class="modal-title fw-bold mb-1" id="modalJobTitle" style="font-size:17px;line-height:1.3;"></h5>
+            <div id="modalJobMeta" style="font-size:13px;color:rgba(255,255,255,0.65);"></div>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:0;">
+          <!-- Quick info bar -->
+          <div id="modalQuickInfo" style="background:#f8f9fa;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
+          <!-- Gemini analysis section -->
+          <div id="modalGeminiSection" style="padding:16px 20px;border-bottom:1px solid var(--border);display:none;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <i class="fas fa-robot" style="color:var(--primary);"></i>
+              <span style="font-weight:700;font-size:14px;color:var(--dark);">AI Quick Take</span>
+              <span id="modalGeminiSpinner" class="spinner-border spinner-border-sm ms-1" style="color:var(--primary);display:none;"></span>
+            </div>
+            <div id="modalGeminiOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
+          </div>
+          <!-- Full JD -->
+          <div style="padding:16px 20px;">
+            <div style="font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:10px;">Full Job Description</div>
+            <div id="modalJobDescription" style="font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap;"></div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-sm btn-outline-custom" id="modalSaveBtn" onclick="modalSaveJob()">
+            <i class="fas fa-bookmark me-1"></i>Save Job
+          </button>
+          <button class="btn btn-sm btn-primary-custom" id="modalTailorBtn" onclick="modalTailor()">
+            <i class="fas fa-magic me-1"></i>Tailor Resume →
+          </button>
+          <a id="modalApplyBtn" href="#" target="_blank" class="btn btn-sm btn-success">
+            <i class="fas fa-external-link-alt me-1"></i>Apply Now
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap 5 JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1076,6 +1142,13 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
   async function initApp() {
     document.getElementById('loadingStatusText').textContent = 'Loading settings...';
 
+    // Bootstrap token from localStorage so any device can authenticate the GitHub read
+    // (Solves mobile "asking for keys" problem — localStorage persists across sessions on same device)
+    try {
+      const cachedToken = localStorage.getItem('jfind_token');
+      if (cachedToken) SETTINGS.githubToken = cachedToken;
+    } catch(e) {}
+
     // Try to read settings from GitHub
     const result = await githubRead('settings.json');
 
@@ -1229,6 +1302,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
 
       // Update SETTINGS with the new token BEFORE writing — githubWrite reads SETTINGS.githubToken
       SETTINGS = newSettings;
+      // Cache token in localStorage so any device can bootstrap the GitHub read on next load
+      try { localStorage.setItem('jfind_token', newSettings.githubToken); } catch(e) {}
       SETTINGS_SHA = await githubWriteWithRetry('settings.json', newSettings, SETTINGS_SHA);
       checkSettingsBanner();
       updateSearchQuery();
@@ -1423,7 +1498,9 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     // Use cache index in onclick — avoids embedding arbitrary JSON in HTML attributes
     return `
       <div class="job-card">
-        <div class="job-card-title">${escapeHtml(job.job_title || 'Untitled')}</div>
+        <div class="job-card-title">
+          <span class="job-card-title-link" onclick="openJobDetail(${cacheIdx})">${escapeHtml(job.job_title || 'Untitled')}</span>
+        </div>
         <div class="job-card-company">
           <i class="fas fa-building me-1" style="color:var(--muted);"></i>${escapeHtml(job.employer_name || 'Unknown Company')}
           ${location ? `<span class="ms-2"><i class="fas fa-map-marker-alt me-1"></i>${escapeHtml(location)}</span>` : ''}
@@ -1443,6 +1520,141 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
           </button>
         </div>
       </div>`;
+  }
+
+  // ============================================================
+  //  JOB DETAIL MODAL
+  // ============================================================
+  let MODAL_CURRENT_JOB_IDX = null;
+
+  function openJobDetail(cacheIdx) {
+    const job = SEARCH_RESULTS_CACHE[cacheIdx];
+    if (!job) return;
+    MODAL_CURRENT_JOB_IDX = cacheIdx;
+
+    // Title & meta
+    document.getElementById('modalJobTitle').textContent = job.job_title || 'Untitled';
+    const location = [job.job_city, job.job_state, job.job_country].filter(Boolean).join(', ');
+    document.getElementById('modalJobMeta').textContent =
+      [job.employer_name, location].filter(Boolean).join(' · ');
+
+    // Quick info bar
+    const { flags, signals } = scoreJob(job);
+    const salary = formatSalary(job);
+    const posted = formatPostedDate(job);
+    const quickParts = [];
+    if (salary) quickParts.push(`<span class="job-card-salary"><i class="fas fa-dollar-sign me-1"></i>${escapeHtml(salary)}</span>`);
+    if (posted) quickParts.push(`<span style="font-size:12px;color:var(--muted);"><i class="far fa-clock me-1"></i>${escapeHtml(posted)}</span>`);
+    flags.forEach(f => quickParts.push(`<span class="flag-badge"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(f)}</span>`));
+    signals.forEach(s => {
+      const extra = s === 'Fresh posting' ? ' fresh-badge' : '';
+      quickParts.push(`<span class="signal-badge${extra}"><i class="fas fa-check me-1"></i>${escapeHtml(s)}</span>`);
+    });
+    document.getElementById('modalQuickInfo').innerHTML = quickParts.join('');
+
+    // Apply link
+    const applyLink = job.job_apply_link || '#';
+    document.getElementById('modalApplyBtn').href = applyLink;
+    document.getElementById('modalApplyBtn').style.display = applyLink !== '#' ? 'inline-flex' : 'none';
+
+    // Full JD
+    document.getElementById('modalJobDescription').textContent = job.job_description || 'No description available.';
+
+    // Gemini analysis — show section and kick off async
+    const geminiSection = document.getElementById('modalGeminiSection');
+    geminiSection.style.display = 'block';
+    document.getElementById('modalGeminiOutput').innerHTML = '';
+    document.getElementById('modalGeminiSpinner').style.display = 'inline-block';
+    runModalGeminiAnalysis(job);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
+    modal.show();
+  }
+
+  async function runModalGeminiAnalysis(job) {
+    const outputEl = document.getElementById('modalGeminiOutput');
+    const spinner = document.getElementById('modalGeminiSpinner');
+
+    if (!SETTINGS.geminiKey) {
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add Gemini key in Settings to enable AI analysis.</span>';
+      spinner.style.display = 'none';
+      return;
+    }
+
+    const prompt = `You are a job search advisor helping a candidate quickly evaluate a job posting.
+
+JOB TITLE: ${job.job_title}
+COMPANY: ${job.employer_name}
+LOCATION: ${[job.job_city, job.job_state].filter(Boolean).join(', ')}
+JOB DESCRIPTION (first 1500 chars):
+${(job.job_description || '').substring(0, 1500)}
+
+Provide a BRIEF analysis in exactly this format (3-4 lines max per section, be concise):
+
+🏢 COMPANY SNAPSHOT
+[1-2 sentences: what the company does, industry, size/stage if known]
+
+✅ WHY APPLY
+[2-3 bullet points: genuine reasons this role fits a PM/Ops candidate with 5+ years cross-functional experience]
+
+⚠️ WATCH OUT
+[1-2 bullet points: red flags or concerns from the JD itself]
+
+🎯 KEY SKILLS TO EMPHASIZE
+[2-3 specific skills/keywords from this JD to highlight in resume]
+
+Keep it tight. No filler. Be honest about concerns.`;
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${SETTINGS.geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 600 }
+          })
+        }
+      );
+      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('No output');
+
+      // Render with light formatting: bold section headers, bullets as styled divs
+      const html = text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/(🏢 COMPANY SNAPSHOT|✅ WHY APPLY|⚠️ WATCH OUT|🎯 KEY SKILLS TO EMPHASIZE)/g,
+          '<strong style="display:block;margin-top:10px;margin-bottom:4px;font-size:13px;color:var(--dark);">$1</strong>')
+        .replace(/\n• /g, '\n<div class="modal-gemini-bullet">• ')
+        .replace(/\n- /g, '\n<div class="modal-gemini-bullet">• ')
+        .split('\n').join('<br>');
+
+      outputEl.innerHTML = html;
+    } catch(e) {
+      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
+    } finally {
+      spinner.style.display = 'none';
+    }
+  }
+
+  function modalSaveJob() {
+    if (MODAL_CURRENT_JOB_IDX === null) return;
+    const job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+    if (!job) return;
+    const btn = document.getElementById('modalSaveBtn');
+    saveJob(job, btn);
+  }
+
+  function modalTailor() {
+    if (MODAL_CURRENT_JOB_IDX === null) return;
+    // Close modal first, then go to tailor tab
+    const modalEl = document.getElementById('jobDetailModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    tailorByIdx(MODAL_CURRENT_JOB_IDX);
   }
 
   // ============================================================
