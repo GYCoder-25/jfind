@@ -1658,37 +1658,71 @@ LEGITIMACY SCORE: [X/10]
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       if (!text) throw new Error('No output');
 
-      // Parse and render with score prominently displayed
-      const escaped = text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-      // Extract legitimacy score for color coding
+      // Extract score BEFORE escaping (work on raw text)
       const scoreMatch = text.match(/LEGITIMACY SCORE:\s*(\d+)/i);
       const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
       const scoreColor = score === null ? '#6c757d' :
                          score >= 7 ? '#198754' :
                          score >= 4 ? '#fd7e14' : '#dc3545';
       const scoreLabel = score === null ? '' :
-                         score >= 7 ? 'Worth applying' :
-                         score >= 4 ? 'Proceed with caution' : 'Likely not worth it';
+                         score >= 7 ? '✓ Worth applying' :
+                         score >= 4 ? '⚠ Proceed with caution' : '✗ Likely not worth it';
 
-      // Build rendered HTML
-      let html = escaped
-        // Score line — make it a big badge
-        .replace(/LEGITIMACY SCORE:\s*(\d+)\/10\s*/i, (match, n) =>
-          `<div style="margin-bottom:12px;">
-            <span style="font-size:22px;font-weight:800;color:${scoreColor};">${n}/10</span>
-            <span style="font-size:13px;font-weight:600;color:${scoreColor};margin-left:8px;">${scoreLabel}</span>
-          </div>`)
+      // Helper: escape HTML safely
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      // Section header keywords to match
+      const HEADERS = ['🏢 COMPANY', '✅ APPLY IF', '⚠️ SKIP IF', '🎯 KEYWORDS TO USE'];
+
+      // Build HTML line by line — guarantees every tag is opened AND closed
+      const lines = text.split('\n');
+      const parts = [];
+
+      // Score badge first
+      if (score !== null) {
+        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+        </div>`);
+      }
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        // Skip the raw LEGITIMACY SCORE line (already rendered as badge)
+        if (/^LEGITIMACY SCORE:/i.test(trimmed)) {
+          // Render the explanation sentence that follows on the same line
+          const explanation = trimmed.replace(/^LEGITIMACY SCORE:\s*\d+\/10\s*/i, '').trim();
+          if (explanation) {
+            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+          }
+          continue;
+        }
+
         // Section headers
-        .replace(/(🏢 COMPANY|✅ APPLY IF|⚠️ SKIP IF|🎯 KEYWORDS TO USE)/g,
-          '<strong style="display:block;margin-top:14px;margin-bottom:5px;font-size:13px;color:var(--dark);border-top:1px solid var(--border);padding-top:10px;">$1</strong>')
-        // Bullets
-        .replace(/\n[•\-\*] /g, '\n<div class="modal-gemini-bullet">')
-        // Line breaks
-        .split('\n').join('<br>');
+        if (HEADERS.some(h => trimmed.startsWith(h))) {
+          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+            <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed)}</strong>
+          </div>`);
+          continue;
+        }
 
-      outputEl.innerHTML = `<div style="padding:4px 0;">${html}</div>`;
+        // Bullet points (•, -, *, or numbered)
+        if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+          const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+            <span style="color:var(--primary);font-weight:700;flex-shrink:0;">•</span>
+            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+          </div>`);
+          continue;
+        }
+
+        // Regular paragraph text
+        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+      }
+
+      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
     } catch(e) {
       outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
     } finally {
