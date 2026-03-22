@@ -1074,8 +1074,10 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const msg = error.message || String(error);
     let userMsg = 'Something went wrong. Please try again.';
 
-    if (msg.includes('401') || msg.includes('403'))
-      userMsg = `API key invalid — check Settings (${context})`;
+    if (msg.includes('401') || msg.includes('403') || msg.includes('Bad credentials') || msg.includes('bad_credentials'))
+      userMsg = `GitHub token invalid or expired — generate a new PAT in Settings (${context})`;
+    else if (msg.includes('422') || msg.includes('Unprocessable'))
+      userMsg = `GitHub write failed — token may lack repo permissions (${context})`;
     else if (msg.includes('429'))
       userMsg = 'Rate limit reached — try again in a moment';
     else if (msg.includes('409'))
@@ -1084,6 +1086,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       userMsg = 'Check your internet connection';
     else if (msg.includes('Gemini returned no output'))
       userMsg = 'Gemini returned no output — try again';
+    else if (msg.includes('GitHub write') || msg.includes('GitHub read'))
+      userMsg = `GitHub error — check your PAT token in Settings (${context}): ${msg.substring(0, 80)}`;
 
     showToast(userMsg, 'danger');
     console.error(`[JFIND ${context}]`, error);
