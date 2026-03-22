@@ -1125,6 +1125,14 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
         const fresh = await githubRead(filename);
         return await githubWrite(filename, content, fresh.sha);
       }
+      // Handle 422 (stale/missing SHA) — happens on fresh device when file already exists on GitHub.
+      // On first load, SETTINGS_SHA is null because the token wasn't available for the initial read.
+      // By the time we reach this retry, the token IS set, so githubRead succeeds and returns the real SHA.
+      if (e.message && e.message.includes('422')) {
+        showToast('Fetching latest sync state...', 'warning');
+        const fresh = await githubRead(filename);
+        return await githubWrite(filename, content, fresh.sha);
+      }
       throw e;
     }
   }
@@ -1139,7 +1147,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     if (msg.includes('401') || msg.includes('403') || msg.includes('Bad credentials') || msg.includes('bad_credentials'))
       userMsg = `GitHub token invalid or expired — generate a new PAT in Settings (${context})`;
     else if (msg.includes('422') || msg.includes('Unprocessable'))
-      userMsg = `GitHub write failed — token may lack repo permissions (${context})`;
+      userMsg = `Sync error — file may be out of date. Try saving again. (${context})`;
     else if (msg.includes('429'))
       userMsg = 'Rate limit reached — try again in a moment';
     else if (msg.includes('409'))
