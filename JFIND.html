@@ -1601,45 +1601,42 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const salary = formatSalary(job);
     const posted = formatPostedDate(job);
 
-    const prompt = `You are a brutally honest job search analyst helping a busy professional decide in 30 seconds whether a job posting is worth their time. Be direct. No filler. No corporate speak.
+    const prompt = `Job search analyst. Brutally honest. No filler.
 
-CANDIDATE PROFILE:
-- 5+ years at Techstyle Fashion Group (Fabletics) as Operations Lead & self-taught Full-Stack Developer
-- Built production CRM managing 44,000+ orders, eliminated 3,000+ hrs/year manual work
-- Target roles: Project Manager, Operations Manager, Marketing Operations, Technical PM
-- Location: San Diego CA (open to hybrid/remote)
-- Salary target: $70,000+
+CANDIDATE: Operations Lead & self-taught Full-Stack Developer, 5+ yrs Fabletics. Built CRM managing 44K+ orders, eliminated 3K+ hrs/year manual work. Target: PM / Ops Manager / Marketing Ops / Technical PM. San Diego CA (hybrid/remote ok). Salary target $70K+.
 
-JOB POSTING:
+POSTING:
 Title: ${job.job_title || 'N/A'}
 Company: ${job.employer_name || 'N/A'}
-Location: ${[job.job_city, job.job_state, job.job_country].filter(Boolean).join(', ') || 'N/A'}
-Salary listed: ${salary || 'NOT LISTED'}
+Location: ${[job.job_city, job.job_state].filter(Boolean).join(', ') || 'N/A'}
+Salary: ${salary || 'NOT LISTED'}
 Posted: ${posted || 'unknown'}
-Publisher/Source: ${job.job_publisher || 'N/A'}
-Direct application: ${job.job_apply_is_direct ? 'YES' : 'NO'}
+Direct apply: ${job.job_apply_is_direct ? 'YES' : 'NO'}
 
-FULL JOB DESCRIPTION:
+JOB DESCRIPTION:
 ${fullJD}
 
 ---
-
-Analyze this posting and respond in EXACTLY this format. Do not add extra sections. Do not skip any section.
+Respond in EXACTLY this format. Complete every section fully. Do not truncate.
 
 LEGITIMACY SCORE: [X/10]
-[One sentence explaining the score. 10 = clearly real company, specific role, salary posted, direct apply. 1 = ghost job, agency spam, vague, no salary. Be specific about what lowered the score.]
+[1-2 sentences: why this score. Ghost job/agency/vague = low. Real company + salary + specific role = high.]
 
 🏢 COMPANY
-[2-3 sentences. What does this company actually do? Industry, size, stage if known. If you don't recognize the company, say so honestly — don't invent details.]
+[2-3 sentences: what this company does, industry, size/stage. If recruiter/agency posting, name that clearly.]
 
 ✅ APPLY IF
-[2-3 bullets. Specific, honest reasons this role fits the candidate profile above. Only include if genuinely relevant.]
+• [reason 1 specific to this JD and candidate profile]
+• [reason 2]
+• [reason 3]
 
 ⚠️ SKIP IF
-[2-3 bullets. Specific red flags from THIS job description — vague responsibilities, no salary, agency posting, role mismatch, unrealistic requirements, signs of a ghost job or bait-and-switch.]
+• [red flag 1 from this specific JD]
+• [red flag 2]
+• [red flag 3]
 
 🎯 KEYWORDS TO USE
-[3-5 exact words/phrases from this JD that should appear in the tailored resume. Just the keywords, comma-separated.]`;
+[5-7 exact phrases from this JD, comma-separated, for resume tailoring]`;
 
     try {
       const response = await fetch(
@@ -1649,7 +1646,7 @@ LEGITIMACY SCORE: [X/10]
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 1200 }
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
           })
         }
       );
