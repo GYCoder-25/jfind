@@ -1227,8 +1227,9 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
         savedAt: new Date().toISOString()
       };
 
-      SETTINGS_SHA = await githubWriteWithRetry('settings.json', newSettings, SETTINGS_SHA);
+      // Update SETTINGS with the new token BEFORE writing — githubWrite reads SETTINGS.githubToken
       SETTINGS = newSettings;
+      SETTINGS_SHA = await githubWriteWithRetry('settings.json', newSettings, SETTINGS_SHA);
       checkSettingsBanner();
       updateSearchQuery();
       showToast('Settings saved ✓', 'success');
