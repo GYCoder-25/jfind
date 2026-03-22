@@ -486,7 +486,8 @@
 
     /* ===== JOB DETAIL MODAL ===== */
     #jobDetailModal .modal-dialog { max-width: 720px; }
-    #modalJobDescription { max-height: 400px; overflow-y: auto; }
+    #jobDetailModal .modal-dialog.modal-dialog-scrollable { max-height: 90vh; }
+    #jobDetailModal .modal-dialog.modal-dialog-scrollable .modal-body { overflow-y: auto; max-height: calc(90vh - 130px); }
     .modal-gemini-bullet { 
       padding: 6px 0 6px 12px; 
       border-left: 3px solid var(--primary); 
@@ -494,9 +495,9 @@
       font-size: 13px;
     }
     @media (max-width: 767px) {
-      #jobDetailModal .modal-dialog { margin: 0; max-width: 100%; height: 100%; }
+      #jobDetailModal .modal-dialog { margin: 0; max-width: 100%; height: 100vh; max-height: 100vh; }
       #jobDetailModal .modal-content { height: 100%; border-radius: 0; }
-      #modalJobDescription { max-height: none; }
+      #jobDetailModal .modal-dialog.modal-dialog-scrollable .modal-body { max-height: calc(100vh - 130px); }
     }
     /* Make job card title clickable */
     .job-card-title-link { 
@@ -877,10 +878,14 @@
             </div>
             <div id="modalGeminiOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
           </div>
-          <!-- Full JD -->
-          <div style="padding:16px 20px;">
-            <div style="font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:10px;">Full Job Description</div>
-            <div id="modalJobDescription" style="font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap;"></div>
+          <!-- Full JD (collapsible) -->
+          <div style="padding:12px 20px 20px 20px;">
+            <button onclick="toggleJD()" id="toggleJDBtn"
+              style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+              <span><i class="fas fa-file-alt me-2"></i>Full Job Description</span>
+              <i class="fas fa-chevron-down" id="toggleJDIcon"></i>
+            </button>
+            <div id="modalJobDescription" style="font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap;margin-top:10px;display:none;max-height:400px;overflow-y:auto;padding:12px;background:#f8f9fa;border-radius:6px;border:1px solid var(--border);"></div>
           </div>
         </div>
         <div class="modal-footer" style="border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
@@ -1742,6 +1747,15 @@ LEGITIMACY SCORE: [X/10]
     const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
     tailorByIdx(MODAL_CURRENT_JOB_IDX);
+  }
+
+  function toggleJD() {
+    const jd = document.getElementById('modalJobDescription');
+    const icon = document.getElementById('toggleJDIcon');
+    if (!jd) return;
+    const isHidden = jd.style.display === 'none';
+    jd.style.display = isHidden ? 'block' : 'none';
+    icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
   }
 
   // ============================================================
