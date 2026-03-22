@@ -891,6 +891,16 @@
             </div>
             <div id="modalGeminiOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
           </div>
+          <!-- Match Score section -->
+          <div id="modalMatchSection" style="padding:16px 20px;border-bottom:1px solid var(--border);display:none;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <i class="fas fa-user-check" style="color:#0dcaf0;"></i>
+              <span style="font-weight:700;font-size:14px;color:var(--dark);">My Match</span>
+              <span id="modalMatchSpinner" class="spinner-border spinner-border-sm ms-1" style="color:#0dcaf0;display:none;"></span>
+              <span style="font-size:11px;color:var(--muted);margin-left:auto;">how well you fit this role</span>
+            </div>
+            <div id="modalMatchOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
+          </div>
           <!-- Full JD (collapsible) -->
           <div style="padding:12px 20px 20px 20px;">
             <button onclick="toggleJD()" id="toggleJDBtn"
@@ -1620,12 +1630,19 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     // Full JD
     document.getElementById('modalJobDescription').textContent = job.job_description || 'No description available.';
 
-    // Gemini analysis — show section and kick off async
+    // Gemini job analysis — legitimacy + company + apply/skip + keywords
     const geminiSection = document.getElementById('modalGeminiSection');
     geminiSection.style.display = 'block';
     document.getElementById('modalGeminiOutput').innerHTML = '';
     document.getElementById('modalGeminiSpinner').style.display = 'inline-block';
     runModalGeminiAnalysis(job);
+
+    // Gemini match score — how well Angelo fits this specific role
+    const matchSection = document.getElementById('modalMatchSection');
+    matchSection.style.display = 'block';
+    document.getElementById('modalMatchOutput').innerHTML = '';
+    document.getElementById('modalMatchSpinner').style.display = 'inline-block';
+    runModalMatchScore(job);
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
@@ -1768,6 +1785,134 @@ LEGITIMACY SCORE: [X/10]
       outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
     } catch(e) {
       outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
+    } finally {
+      spinner.style.display = 'none';
+    }
+  }
+
+  async function runModalMatchScore(job) {
+    const outputEl = document.getElementById('modalMatchOutput');
+    const spinner = document.getElementById('modalMatchSpinner');
+
+    const geminiKey = getNextGeminiKey();
+    if (!geminiKey) {
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings to enable match scoring.</span>';
+      spinner.style.display = 'none';
+      return;
+    }
+
+    if (!RESUME_CONTENT) {
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add your resume in the Resume tab to enable match scoring.</span>';
+      spinner.style.display = 'none';
+      return;
+    }
+
+    const fullJD = (job.job_description || '').substring(0, 3000);
+
+    const prompt = `You are a career coach scoring how well a candidate matches a specific job posting. Be direct and honest — do not inflate the score.
+
+CANDIDATE RESUME:
+${RESUME_CONTENT}
+
+JOB POSTING:
+Title: ${job.job_title || 'N/A'}
+Company: ${job.employer_name || 'N/A'}
+Description:
+${fullJD}
+
+---
+Score how well this candidate matches this role. Respond in EXACTLY this format. Complete every section. Do not truncate.
+
+MATCH SCORE: [X/10]
+[1 sentence: overall verdict. Be honest — if it's a stretch, say so.]
+
+✅ STRONG FIT
+• [specific experience or skill from resume that directly matches a requirement in this JD]
+• [second strong match]
+• [third strong match]
+
+⚠️ GAPS TO ADDRESS
+• [requirement in the JD that is missing or weak in the resume]
+• [second gap]
+• [third gap — if no real gaps, say "No significant gaps identified"]
+
+💡 HOW TO POSITION
+[2-3 sentences: concrete advice on how to frame the resume/cover letter for THIS specific role. What to lead with, what to downplay, what angle to take.]`;
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
+          })
+        }
+      );
+      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (!text) throw new Error('No output');
+
+      // Extract match score for color coding
+      const scoreMatch = text.match(/MATCH SCORE:\s*(\d+)/i);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+      const scoreColor = score === null ? '#6c757d' :
+                         score >= 7 ? '#198754' :
+                         score >= 5 ? '#fd7e14' : '#dc3545';
+      const scoreLabel = score === null ? '' :
+                         score >= 7 ? '✓ Strong match' :
+                         score >= 5 ? '~ Moderate match' : '✗ Significant gaps';
+
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const MATCH_HEADERS = ['✅ STRONG FIT', '⚠️ GAPS TO ADDRESS', '💡 HOW TO POSITION'];
+      const lines = text.split('\n');
+      const parts = [];
+
+      // Score badge
+      if (score !== null) {
+        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+        </div>`);
+      }
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+
+        if (/^MATCH SCORE:/i.test(trimmed)) {
+          const explanation = trimmed.replace(/^MATCH SCORE:\s*\d+\/10\s*/i, '').trim();
+          if (explanation) {
+            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+          }
+          continue;
+        }
+
+        if (MATCH_HEADERS.some(h => trimmed.startsWith(h))) {
+          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+            <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed)}</strong>
+          </div>`);
+          continue;
+        }
+
+        if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+          const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+            <span style="color:#0dcaf0;font-weight:700;flex-shrink:0;">•</span>
+            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+          </div>`);
+          continue;
+        }
+
+        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+      }
+
+      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+    } catch(e) {
+      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">Match scoring unavailable — ${escapeHtml(e.message)}</span>`;
     } finally {
       spinner.style.display = 'none';
     }
