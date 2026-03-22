@@ -828,14 +828,29 @@
             <div class="form-text">Needs repo read/write access to <strong>jfind-data</strong> repo.</div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">JSearch API Key (RapidAPI)</label>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">JSearch API Key 1 <span style="color:var(--muted);font-weight:400;">(required)</span></label>
             <div class="input-password-wrapper">
               <input type="password" id="settingsJsearchKey" class="form-control" placeholder="RapidAPI key...">
               <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey', this)" type="button">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">JSearch API Key 2 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+            <div class="input-password-wrapper">
+              <input type="password" id="settingsJsearchKey2" class="form-control" placeholder="RapidAPI key (2nd account)...">
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey2', this)" type="button"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">JSearch API Key 3 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+            <div class="input-password-wrapper">
+              <input type="password" id="settingsJsearchKey3" class="form-control" placeholder="RapidAPI key (3rd account)...">
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey3', this)" type="button"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="form-text">3 keys = 600 searches/month. Requests rotate Key 1 → 2 → 3 → 1...</div>
           </div>
 
           <div class="mb-2">
@@ -1003,6 +1018,8 @@
   const SEARCH_RESULTS_CACHE = {};
   // Gemini round-robin key index
   let GEMINI_KEY_INDEX = 0;
+  // JSearch round-robin key index (supports up to 3 RapidAPI accounts = 600 req/month)
+  let JSEARCH_KEY_INDEX = 0;
   // Seen jobs — stored in saved-jobs.json alongside SAVED_JOBS
   let SEEN_JOB_IDS = new Set();         // fast O(1) lookup
   let SEEN_PENDING_WRITE = false;       // debounce: batch writes instead of one per card open
@@ -1027,6 +1044,8 @@
     geminiKey2: '',       // Optional second Gemini key (round-robin)
     geminiKey3: '',       // Optional third Gemini key (round-robin)
     jsearchKey: '',       // Enter your RapidAPI JSearch key in Settings
+    jsearchKey2: '',      // Optional second JSearch key (round-robin — 2nd RapidAPI account)
+    jsearchKey3: '',      // Optional third JSearch key (round-robin — 3rd RapidAPI account)
     githubToken: '',      // Enter your GitHub Personal Access Token in Settings
     geminiModel: 'gemini-2.5-flash',
     jsearchUrl: 'https://jsearch.p.rapidapi.com/search',
@@ -1070,6 +1089,22 @@
     GEMINI_KEY_INDEX = GEMINI_KEY_INDEX % keys.length;
     const key = keys[GEMINI_KEY_INDEX];
     GEMINI_KEY_INDEX = (GEMINI_KEY_INDEX + 1) % keys.length;
+    return key;
+  }
+
+  function getNextJsearchKey() {
+    // Build array of only non-empty JSearch keys (up to 3 RapidAPI accounts)
+    const keys = [
+      SETTINGS.jsearchKey,
+      SETTINGS.jsearchKey2,
+      SETTINGS.jsearchKey3
+    ].filter(k => k && k.trim().length > 0);
+
+    if (keys.length === 0) return '';
+    // Rotate index, wrap around — spreads 200 req/month limit across all accounts
+    JSEARCH_KEY_INDEX = JSEARCH_KEY_INDEX % keys.length;
+    const key = keys[JSEARCH_KEY_INDEX];
+    JSEARCH_KEY_INDEX = (JSEARCH_KEY_INDEX + 1) % keys.length;
     return key;
   }
 
@@ -1430,6 +1465,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     set('settingsGithubToken', s.githubToken);
     set('settingsJsearchKey', s.jsearchKey);
+    set('settingsJsearchKey2', s.jsearchKey2);
+    set('settingsJsearchKey3', s.jsearchKey3);
     set('settingsGeminiKey', s.geminiKey);
     set('settingsGeminiKey2', s.geminiKey2);
     set('settingsGeminiKey3', s.geminiKey3);
@@ -1461,6 +1498,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
         dataRepo: DEFAULT_SETTINGS.dataRepo,
         githubToken: document.getElementById('settingsGithubToken').value.trim(),
         jsearchKey: document.getElementById('settingsJsearchKey').value.trim(),
+        jsearchKey2: document.getElementById('settingsJsearchKey2').value.trim(),
+        jsearchKey3: document.getElementById('settingsJsearchKey3').value.trim(),
         geminiKey: document.getElementById('settingsGeminiKey').value.trim(),
         geminiKey2: document.getElementById('settingsGeminiKey2').value.trim(),
         geminiKey3: document.getElementById('settingsGeminiKey3').value.trim(),
@@ -1635,7 +1674,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
 
     const response = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
       headers: {
-        'x-rapidapi-key': SETTINGS.jsearchKey || DEFAULT_SETTINGS.jsearchKey,
+        'x-rapidapi-key': getNextJsearchKey() || DEFAULT_SETTINGS.jsearchKey,
         'x-rapidapi-host': 'jsearch.p.rapidapi.com'
       }
     });
