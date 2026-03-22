@@ -4600,7 +4600,11 @@ LEGITIMACY SCORE: [X/10]
 
     const geminiKey = getNextGeminiKey();
 
-    if (!geminiKey || !RESUME_CONTENT) return null;
+    if (!geminiKey) return null;
+
+    // Use loaded resume, fall back to hardcoded default if background load hasn't finished yet
+    const resumeText = RESUME_CONTENT || DEFAULT_RESUME;
+    if (!resumeText) return null;
 
     const fullJD = (job.job_description || '').substring(0, 3000);
 
@@ -4610,7 +4614,7 @@ LEGITIMACY SCORE: [X/10]
 
 CANDIDATE RESUME:
 
-${RESUME_CONTENT}
+${resumeText}
 
 
 
@@ -5280,6 +5284,11 @@ MATCH SCORE: [X/10]
 
         renderGeminiAnalysisText(text, document.getElementById('modalGeminiOutput'));
 
+      } else {
+
+        document.getElementById('modalGeminiOutput').innerHTML =
+          '<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — check Gemini key in Settings</span>';
+
       }
 
       document.getElementById('modalGeminiSpinner').style.display = 'none';
@@ -5299,6 +5308,11 @@ MATCH SCORE: [X/10]
         saveSavedJobs().catch(console.error);
 
         renderMatchScoreText(text, document.getElementById('modalMatchOutput'));
+
+      } else {
+
+        document.getElementById('modalMatchOutput').innerHTML =
+          '<span style="color:var(--muted);font-size:12px;">Match score unavailable — check Gemini key in Settings</span>';
 
       }
 
