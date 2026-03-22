@@ -1,2810 +1,7085 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>JFIND — Job Search</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
+
     :root {
+
       --primary: #6f42c1;
+
       --success: #198754;
+
       --warning: #fd7e14;
+
       --danger: #dc3545;
+
       --info: #0dcaf0;
+
       --dark: #1a1a2e;
+
       --card-bg: #ffffff;
+
       --border: #dee2e6;
+
       --muted: #6c757d;
+
     }
+
+
 
     * { box-sizing: border-box; }
 
+
+
     body {
+
       background: #f8f9fa;
+
       font-size: 15px;
+
       padding-bottom: 80px;
+
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
       color: #212529;
+
     }
+
+
 
     /* ===== APP HEADER ===== */
+
     .app-header {
+
       background: var(--dark);
+
       color: white;
+
       padding: 10px 20px;
+
       display: flex;
+
       align-items: center;
+
       gap: 10px;
+
       position: sticky;
+
       top: 0;
+
       z-index: 900;
+
     }
+
     .app-title {
+
       font-size: 22px;
+
       font-weight: 800;
+
       letter-spacing: 2px;
+
       color: #a78bfa;
+
     }
+
     .app-subtitle {
+
       font-size: 13px;
+
       color: rgba(255,255,255,0.5);
+
     }
+
+
 
     /* ===== DESKTOP TAB BAR (top) ===== */
+
     .tab-bar-desktop {
+
       background: white;
+
       border-bottom: 2px solid var(--border);
+
       padding: 0 16px;
+
       position: sticky;
+
       top: 44px;
+
       z-index: 800;
+
     }
+
     .tab-bar-desktop .tab-btn {
+
       background: none;
+
       border: none;
+
       border-bottom: 3px solid transparent;
+
       padding: 12px 18px;
+
       cursor: pointer;
+
       font-size: 14px;
+
       font-weight: 500;
+
       color: var(--muted);
+
       transition: all 0.15s;
+
       white-space: nowrap;
+
     }
+
     .tab-bar-desktop .tab-btn:hover { color: var(--primary); }
+
     .tab-bar-desktop .tab-btn.active {
+
       color: var(--primary);
+
       border-bottom-color: var(--primary);
+
     }
+
+
 
     /* ===== MOBILE TAB BAR (bottom, fixed) ===== */
+
     .tab-bar-mobile {
+
       display: none;
+
       position: fixed;
+
       bottom: 0; left: 0; right: 0;
+
       background: var(--dark);
+
       z-index: 1000;
+
       height: 60px;
+
       align-items: stretch;
+
     }
+
     .tab-bar-mobile .tab-btn-mobile {
+
       flex: 1;
+
       background: none;
+
       border: none;
+
       color: rgba(255,255,255,0.5);
+
       font-size: 10px;
+
       display: flex;
+
       flex-direction: column;
+
       align-items: center;
+
       justify-content: center;
+
       cursor: pointer;
+
       padding: 4px 2px;
+
       transition: color 0.15s;
+
       gap: 2px;
+
       min-height: 44px;
+
     }
+
     .tab-bar-mobile .tab-btn-mobile i { font-size: 16px; }
+
     .tab-bar-mobile .tab-btn-mobile.active { color: #a78bfa; }
+
     .tab-bar-mobile .tab-btn-mobile:hover { color: rgba(255,255,255,0.8); }
 
+
+
     /* ===== TAB CONTENT ===== */
+
     .tab-pane { display: none; }
+
     .tab-pane.active { display: block; }
 
+
+
     .tab-section {
+
       max-width: 700px;
+
       margin: 0 auto;
+
       padding: 20px 16px;
+
     }
+
+
 
     /* ===== JOB CARDS ===== */
+
     .job-card {
+
       background: var(--card-bg);
+
       border: 1px solid var(--border);
+
       border-radius: 10px;
+
       padding: 16px;
+
       margin-bottom: 12px;
+
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+
       transition: box-shadow 0.15s;
+
     }
+
     .job-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
+
     .job-card-title {
+
       font-size: 16px;
+
       font-weight: 700;
+
       color: #1a1a2e;
+
       margin-bottom: 3px;
+
       line-height: 1.3;
+
     }
+
     .job-card-company {
+
       font-size: 14px;
+
       color: var(--muted);
+
       margin-bottom: 6px;
+
     }
+
     .job-card-meta {
+
       font-size: 12px;
+
       color: var(--muted);
+
       margin-bottom: 8px;
+
       display: flex;
+
       flex-wrap: wrap;
+
       gap: 8px;
+
       align-items: center;
+
     }
+
     .job-card-salary {
+
       background: #d1fae5;
+
       color: #065f46;
+
       font-size: 12px;
+
       font-weight: 600;
+
       padding: 3px 8px;
+
       border-radius: 20px;
+
     }
+
     .job-card-desc {
+
       font-size: 13px;
+
       color: #495057;
+
       margin-bottom: 10px;
+
       line-height: 1.5;
+
     }
+
     .job-card-badges { margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+
     .job-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+
+
     /* ===== FLAG/SIGNAL BADGES ===== */
+
     .flag-badge {
+
       background: #dc3545;
+
       color: white;
+
       font-size: 11px;
+
       padding: 2px 7px;
+
       border-radius: 20px;
+
       display: inline-block;
+
       font-weight: 500;
+
     }
+
     .signal-badge {
+
       background: #198754;
+
       color: white;
+
       font-size: 11px;
+
       padding: 2px 7px;
+
       border-radius: 20px;
+
       display: inline-block;
+
       font-weight: 500;
+
     }
+
     .fresh-badge { background: #0dcaf0; color: #000; }
 
+
+
     /* ===== SEEN CARD ===== */
+
     .job-card.seen-card {
+
       opacity: 0.52;
+
       border-left: 3px solid #adb5bd;
+
     }
+
     .job-card.seen-card:hover { opacity: 0.78; }
+
     .seen-badge {
+
       font-size: 10px;
+
       padding: 1px 6px;
+
       border-radius: 20px;
+
       background: #adb5bd;
+
       color: #fff;
+
       font-weight: 600;
+
       display: inline-flex;
+
       align-items: center;
+
       gap: 3px;
+
     }
+
+
 
     /* ===== SOURCE BADGE ===== */
+
     .source-badge {
+
       font-size: 11px;
+
       padding: 2px 8px;
+
       border-radius: 20px;
+
       display: inline-flex;
+
       align-items: center;
+
       gap: 4px;
+
       font-weight: 600;
+
       letter-spacing: 0.2px;
+
     }
+
     .source-linkedin  { background: #0a66c2; color: #fff; }
+
     .source-indeed    { background: #2164f3; color: #fff; }
+
     .source-glassdoor { background: #0caa41; color: #fff; }
+
     .source-ziprecruiter { background: #4a154b; color: #fff; }
+
     .source-other     { background: #495057; color: #fff; }
 
+
+
     /* ===== STATUS BADGES ===== */
+
     .status-badge {
+
       font-size: 11px;
+
       padding: 2px 8px;
+
       border-radius: 20px;
+
       font-weight: 600;
+
       color: white;
+
       display: inline-block;
+
     }
+
     .status-saved { background: #6c757d; }
+
     .status-tailored { background: #0dcaf0; color: #000; }
+
     .status-applied { background: #198754; }
+
     .status-rejected { background: #dc3545; }
 
+
+
     /* ===== TAILOR OUTPUT ===== */
+
     .changed-highlight {
+
       background: #fff3cd;
+
       border-left: 3px solid #fd7e14;
+
       padding: 2px 6px;
+
       display: block;
+
       margin: 1px 0;
+
     }
+
     .tailor-pre {
+
       white-space: pre-wrap;
+
       font-family: 'Courier New', monospace;
+
       font-size: 13px;
+
       background: #f8f9fa;
+
       padding: 16px;
+
       border-radius: 8px;
+
       border: 1px solid var(--border);
+
       max-height: 500px;
+
       overflow-y: auto;
+
     }
+
     .tailor-section { height: 100%; }
 
+
+
     /* ===== RESUME TEXTAREA ===== */
+
     .resume-textarea {
+
       font-family: 'Courier New', monospace;
+
       font-size: 13px;
+
       resize: vertical;
+
       min-height: 500px;
+
       width: 100%;
+
       border: 1px solid var(--border);
+
       border-radius: 8px;
+
       padding: 12px;
+
       background: white;
+
       outline: none;
+
       transition: border-color 0.15s;
+
     }
+
     .resume-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(111,66,193,0.1); }
+
     .char-count {
+
       text-align: right;
+
       font-size: 12px;
+
       color: var(--muted);
+
       margin-top: 4px;
+
     }
+
+
 
     /* ===== SETTINGS ===== */
+
     .settings-card {
+
       background: white;
+
       border: 1px solid var(--border);
+
       border-radius: 10px;
+
       padding: 20px;
+
       margin-bottom: 16px;
+
     }
+
     .settings-card h6 {
+
       font-weight: 700;
+
       color: var(--dark);
+
       margin-bottom: 16px;
+
       font-size: 14px;
+
       text-transform: uppercase;
+
       letter-spacing: 0.5px;
+
     }
+
     .input-password-wrapper {
+
       position: relative;
+
     }
+
     .input-password-wrapper input {
+
       padding-right: 44px;
+
     }
+
     .input-password-wrapper .toggle-eye {
+
       position: absolute;
+
       right: 12px;
+
       top: 50%;
+
       transform: translateY(-50%);
+
       background: none;
+
       border: none;
+
       cursor: pointer;
+
       color: var(--muted);
+
       padding: 0;
+
       font-size: 15px;
+
     }
+
     .connection-result {
+
       display: flex;
+
       align-items: center;
+
       gap: 8px;
+
       padding: 8px 0;
+
       font-size: 14px;
+
     }
+
     .conn-ok { color: #198754; }
+
     .conn-fail { color: #dc3545; }
 
+
+
     /* ===== TOAST NOTIFICATIONS ===== */
+
     #toastContainer {
+
       position: fixed;
+
       top: 20px;
+
       right: 20px;
+
       z-index: 9999;
+
       pointer-events: none;
+
     }
+
     .toast-notification {
+
       background: #333;
+
       color: white;
+
       padding: 12px 18px;
+
       border-radius: 10px;
+
       margin-bottom: 8px;
+
       opacity: 0;
+
       transition: opacity 0.3s, transform 0.3s;
+
       max-width: 320px;
+
       font-size: 14px;
+
       font-weight: 500;
+
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+
       transform: translateX(20px);
+
     }
+
     .toast-notification.show {
+
       opacity: 1;
+
       transform: translateX(0);
+
     }
+
     .toast-success { background: #198754; }
+
     .toast-danger { background: #dc3545; }
+
     .toast-info { background: #6f42c1; }
+
     .toast-warning { background: #fd7e14; }
 
+
+
     /* ===== LOADING STATE ===== */
+
     .loading-spinner {
+
       text-align: center;
+
       padding: 48px 20px;
+
       color: var(--muted);
+
     }
+
     .loading-spinner .spinner-border {
+
       color: var(--primary);
+
       width: 2.5rem;
+
       height: 2.5rem;
+
     }
+
     .empty-state {
+
       text-align: center;
+
       padding: 48px 20px;
+
       color: var(--muted);
+
     }
+
     .empty-state i { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+
     .empty-state p { font-size: 15px; }
 
+
+
     /* ===== ALERTS/BANNERS ===== */
+
     .banner-alert {
+
       border-radius: 10px;
+
       font-size: 14px;
+
       margin-bottom: 16px;
+
       padding: 12px 16px;
+
       display: flex;
+
       align-items: center;
+
       gap: 10px;
+
     }
+
+
 
     /* ===== SAVED JOBS LIST ===== */
+
     .saved-job-row {
+
       background: white;
+
       border: 1px solid var(--border);
+
       border-radius: 8px;
+
       padding: 14px 16px;
+
       margin-bottom: 10px;
+
       display: flex;
+
       align-items: flex-start;
+
       gap: 12px;
+
       flex-wrap: wrap;
+
     }
+
     .saved-job-info { flex: 1; min-width: 200px; }
+
     .saved-job-title { font-weight: 700; font-size: 14px; color: var(--dark); margin-bottom: 3px; }
+
     .saved-job-company { font-size: 13px; color: var(--muted); }
+
     .saved-job-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
     .days-saved { font-size: 12px; color: var(--muted); }
 
+
+
     /* ===== TWO-PANEL LAYOUT (Tailor, desktop) ===== */
+
     .tailor-two-panel {
+
       display: flex;
+
       gap: 16px;
+
       align-items: flex-start;
+
     }
+
     .tailor-two-panel .tailor-left,
+
     .tailor-two-panel .tailor-right {
+
       flex: 1;
+
     }
+
+
 
     /* ===== SEARCH CONTROLS ===== */
+
     .search-controls {
+
       background: white;
+
       border: 1px solid var(--border);
+
       border-radius: 10px;
+
       padding: 16px;
+
       margin-bottom: 16px;
+
     }
+
     .search-controls .form-label {
+
       font-size: 13px;
+
       font-weight: 600;
+
       color: #495057;
+
       margin-bottom: 4px;
+
     }
+
+
 
     /* ===== BUTTON STYLES ===== */
+
     .btn-primary-custom {
+
       background: var(--primary);
+
       border: none;
+
       color: white;
+
       font-weight: 600;
+
       border-radius: 8px;
+
       transition: background 0.15s, transform 0.1s;
+
     }
+
     .btn-primary-custom:hover { background: #5a32a3; color: white; }
+
     .btn-primary-custom:active { transform: scale(0.98); }
 
+
+
     .btn-outline-custom {
+
       border: 1.5px solid var(--border);
+
       background: white;
+
       color: #495057;
+
       font-weight: 500;
+
       border-radius: 8px;
+
       transition: border-color 0.15s;
+
     }
+
     .btn-outline-custom:hover { border-color: var(--primary); color: var(--primary); background: white; }
 
+
+
     /* ===== RESULTS HEADER ===== */
+
     .results-header {
+
       font-size: 13px;
+
       color: var(--muted);
+
       margin-bottom: 12px;
+
       font-weight: 500;
+
     }
+
+
 
     /* ===== FORM CONTROL OVERRIDES ===== */
+
     .form-control:focus, .form-select:focus {
+
       border-color: var(--primary);
+
       box-shadow: 0 0 0 3px rgba(111,66,193,0.1);
+
     }
+
+
 
     /* ===== SECTION TITLE ===== */
+
     .section-title {
+
       font-size: 18px;
+
       font-weight: 700;
+
       color: var(--dark);
+
       margin-bottom: 4px;
+
     }
+
     .section-subtitle {
+
       font-size: 13px;
+
       color: var(--muted);
+
       margin-bottom: 20px;
+
     }
+
+
 
     /* ===== TAILOR SPECIFIC ===== */
+
     #tailorJobTitle, #tailorCompany {
+
       font-weight: 600;
+
     }
+
     .tailor-generate-btn {
+
       width: 100%;
+
       padding: 14px;
+
       font-size: 15px;
+
     }
+
     .tailor-output-header {
+
       display: flex;
+
       justify-content: space-between;
+
       align-items: center;
+
       margin-bottom: 8px;
+
       flex-wrap: wrap;
+
       gap: 8px;
+
     }
+
+
 
     /* ===== RESPONSIVE ===== */
+
     @media (max-width: 767px) {
+
       .tab-bar-mobile { display: flex !important; }
+
       .tab-bar-desktop { display: none !important; }
+
       body { padding-bottom: 70px; font-size: 15px; }
+
       input, select, textarea { font-size: 16px !important; }
+
       .btn { min-height: 44px; }
+
       .tab-section { padding: 14px 12px; }
+
       .tailor-two-panel { flex-direction: column; }
+
       .job-card-actions { flex-direction: column; }
+
       .job-card-actions .btn { width: 100%; }
+
       .saved-job-actions { width: 100%; justify-content: flex-end; }
+
       .app-header { padding: 8px 14px; position: relative; top: auto; }
+
     }
+
+
 
     @media (min-width: 768px) {
+
       .tab-bar-mobile { display: none !important; }
+
       .tab-bar-desktop { display: flex !important; }
+
       body { padding-bottom: 0; }
+
       .tailor-two-panel { flex-direction: row; }
+
     }
+
+
 
     /* ===== JOB DETAIL MODAL ===== */
+
     #jobDetailModal .modal-dialog { max-width: 720px; }
+
+    /* Change 1: scroll fix — body scrolls, header+footer stay fixed */
     #jobDetailModal .modal-dialog.modal-dialog-scrollable { max-height: 90vh; }
-    #jobDetailModal .modal-dialog.modal-dialog-scrollable .modal-body { overflow-y: auto; max-height: calc(90vh - 130px); }
+
+    #jobDetailModal .modal-body {
+      overflow-y: auto;
+      max-height: calc(85vh - 120px); /* 120px accounts for fixed header + footer */
+      -webkit-overflow-scrolling: touch; /* iOS momentum scroll */
+    }
+
     .modal-gemini-bullet { 
+
       padding: 6px 0 6px 12px; 
+
       border-left: 3px solid var(--primary); 
+
       margin-bottom: 6px; 
+
       font-size: 13px;
+
+    }
+
+    @media (max-width: 767px) {
+
+      #jobDetailModal .modal-dialog { margin: 0; max-width: 100%; height: 100vh; max-height: 100vh; }
+
+      #jobDetailModal .modal-content { height: 100%; border-radius: 0; }
+
+      #jobDetailModal .modal-body { max-height: calc(100vh - 120px); }
+
     }
     @media (max-width: 767px) {
+
       #jobDetailModal .modal-dialog { margin: 0; max-width: 100%; height: 100vh; max-height: 100vh; }
+
       #jobDetailModal .modal-content { height: 100%; border-radius: 0; }
+
       #jobDetailModal .modal-dialog.modal-dialog-scrollable .modal-body { max-height: calc(100vh - 130px); }
+
     }
+
     /* Make job card title clickable */
+
     .job-card-title-link { 
+
       cursor: pointer; 
+
       color: var(--dark);
+
       text-decoration: none;
+
     }
+
     .job-card-title-link:hover { color: var(--primary); text-decoration: underline; }
 
+
+
     /* ===== APPLY LINK SECTION ===== */
+
     .apply-link-section {
+
       background: #f0fdf4;
+
       border: 1px solid #bbf7d0;
+
       border-radius: 8px;
+
       padding: 12px 16px;
+
       margin-top: 12px;
+
     }
+
+
 
     /* ===== SAVED JOB FLAGS (compact) ===== */
+
     .saved-job-flags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 3px; }
 
+
+
     /* ===== LAST SAVED TIMESTAMP ===== */
+
     .last-saved-text {
+
       font-size: 12px;
+
       color: var(--muted);
+
       margin-top: 6px;
+
     }
+
+
 
     /* ===== LOADING OVERLAY ===== */
+
     #appLoadingOverlay {
+
       position: fixed;
+
       inset: 0;
+
       background: #f8f9fa;
+
       z-index: 9998;
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
+
       flex-direction: column;
+
       gap: 16px;
+
     }
+
     #appLoadingOverlay .load-title {
+
       font-size: 28px;
+
       font-weight: 800;
+
       color: #a78bfa;
+
       letter-spacing: 3px;
+
     }
+
     #appLoadingOverlay p { color: var(--muted); font-size: 14px; }
 
+    /* ===== SAVED ACTION BUTTONS (Change 3) ===== */
+
+    .saved-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      min-height: 48px;
+      font-size: 13px;
+      padding: 4px 8px;
+      gap: 2px;
+    }
+
+    .saved-action-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      line-height: 1;
+    }
+
+    /* Change 4: saved job title hover */
+    .saved-job-title {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .saved-job-title:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
     /* ===== DISMISS BUTTON ===== */
+
     .btn-dismiss {
       background: transparent;
+
       border: 1px solid #dee2e6;
+
       color: #adb5bd;
+
       border-radius: 6px;
+
       padding: 4px 8px;
+
       transition: all 0.15s;
+
       flex-shrink: 0;
+
     }
+
     .btn-dismiss:hover {
+
       background: #dc3545;
+
       border-color: #dc3545;
+
       color: white;
+
     }
+
   </style>
+
 </head>
+
 <body>
 
+
+
   <!-- App Loading Overlay -->
+
   <div id="appLoadingOverlay">
+
     <div class="load-title">JFIND</div>
+
     <div class="spinner-border" style="color: #6f42c1; width:2.5rem;height:2.5rem;" role="status"></div>
+
     <p id="loadingStatusText">Loading...</p>
+
   </div>
+
+
 
   <!-- Toast Container -->
+
   <div id="toastContainer"></div>
 
+
+
   <!-- App Header -->
+
   <div class="app-header">
+
     <span class="app-title">JFIND</span>
+
     <span class="app-subtitle">Job Search</span>
+
   </div>
 
+
+
   <!-- Desktop Tab Bar (top) -->
+
   <nav class="tab-bar-desktop" id="desktopTabBar">
+
     <button class="tab-btn" onclick="showTab('search')" id="dt-search">
+
       <i class="fas fa-search me-1"></i> Search
+
     </button>
+
     <button class="tab-btn" onclick="showTab('saved')" id="dt-saved">
+
       <i class="fas fa-bookmark me-1"></i> Saved Jobs
+
       <span id="savedCountBadge" class="badge rounded-pill ms-1" style="background:var(--primary);display:none;font-size:10px;"></span>
+
     </button>
+
     <button class="tab-btn" onclick="showTab('tailor')" id="dt-tailor">
+
       <i class="fas fa-magic me-1"></i> Tailor
+
     </button>
+
     <button class="tab-btn" onclick="showTab('resume')" id="dt-resume">
+
       <i class="fas fa-file-alt me-1"></i> Resume
+
     </button>
+
     <button class="tab-btn" onclick="showTab('settings')" id="dt-settings">
+
       <i class="fas fa-cog me-1"></i> Settings
+
     </button>
+
   </nav>
 
+
+
   <!-- Tab Content -->
+
   <div id="mainContent">
 
+
+
     <!-- ==================== TAB 1: SEARCH ==================== -->
+
     <div id="tab-search" class="tab-pane">
+
       <div class="tab-section">
+
         <div class="section-title">Find Jobs</div>
+
         <div class="section-subtitle">Search real-time listings and save the best ones.</div>
 
+
+
         <div class="search-controls">
+
           <div class="mb-3">
+
             <label class="form-label">Search Query</label>
+
             <div class="input-group">
+
               <input type="text" id="searchQuery" class="form-control"
+
                      placeholder="e.g. Operations Manager San Diego"
+
                      value="Operations Manager San Diego">
+
               <button class="btn btn-primary-custom px-3" onclick="runSearch()" id="searchBtn">
+
                 <i class="fas fa-search"></i>
+
               </button>
+
             </div>
+
           </div>
+
           <div class="row g-2 mb-2">
+
             <div class="col-sm-5">
+
               <label class="form-label">Preset</label>
+
               <select class="form-select form-select-sm" id="presetSelect" onchange="applyPreset()">
+
                 <option value="">— Select Preset —</option>
+
               </select>
+
             </div>
+
             <div class="col-sm-4">
+
               <label class="form-label">Date Posted</label>
+
               <select class="form-select form-select-sm" id="dateFilter">
+
                 <option value="">All Time</option>
+
                 <option value="today">Today</option>
+
                 <option value="3days">Last 3 Days</option>
+
                 <option value="week">This Week</option>
+
               </select>
+
             </div>
+
             <div class="col-sm-3">
+
               <label class="form-label">Remote</label>
+
               <div class="form-check form-switch mt-1">
+
                 <input class="form-check-input" type="checkbox" id="remoteToggle">
+
                 <label class="form-check-label small" for="remoteToggle">Remote Only</label>
+
               </div>
+
             </div>
+
           </div>
+
           <div class="d-flex align-items-center gap-3 mb-2" style="font-size:13px;">
+
             <div class="form-check form-switch mb-0">
+
               <input class="form-check-input" type="checkbox" id="hideSeenToggle" onchange="applyHideSeenFilter()">
+
               <label class="form-check-label" for="hideSeenToggle" style="color:var(--muted);">Hide seen jobs</label>
+
             </div>
+
             <span id="seenCountLabel" style="color:var(--muted);display:none;"></span>
+
           </div>
+
         </div>
+
+
 
         <div id="searchResults">
+
           <div class="empty-state">
+
             <i class="fas fa-search d-block mb-2"></i>
+
             <p>Enter a query and hit Search to find jobs.</p>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <!-- ==================== TAB 2: SAVED JOBS ==================== -->
+
     <div id="tab-saved" class="tab-pane">
+
       <div class="tab-section">
+
         <div class="section-title">Saved Jobs</div>
+
         <div class="section-subtitle">Track every job you're considering.</div>
+
         <div id="savedJobsList">
+
           <div class="empty-state">
+
             <i class="fas fa-bookmark d-block mb-2"></i>
+
             <p>No saved jobs yet. Search and save jobs from the Search tab.</p>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
+
 
     <!-- ==================== TAB 3: TAILOR RESUME ==================== -->
+
     <div id="tab-tailor" class="tab-pane">
+
       <div class="tab-section" style="max-width:1000px;">
+
         <div class="section-title">Tailor Resume</div>
+
         <div class="section-subtitle">Paste a job description and let Gemini rewrite your bullets to match.</div>
 
+
+
         <div class="row g-2 mb-3">
+
           <div class="col-sm-6">
+
             <label class="form-label fw-semibold small">Job Title</label>
+
             <input type="text" id="tailorJobTitle" class="form-control" placeholder="e.g. Operations Manager">
+
           </div>
+
           <div class="col-sm-6">
+
             <label class="form-label fw-semibold small">Company</label>
+
             <input type="text" id="tailorCompany" class="form-control" placeholder="e.g. Acme Corp">
+
           </div>
+
         </div>
+
+
 
         <div class="tailor-two-panel">
+
           <div class="tailor-left">
+
             <label class="form-label fw-semibold small">Job Description</label>
+
             <textarea id="tailorJD" class="form-control"
+
                       style="height:400px;font-size:13px;font-family:'Courier New',monospace;resize:vertical;"
+
                       placeholder="Paste the full job description here..."></textarea>
+
           </div>
+
           <div class="tailor-right">
+
             <div class="tailor-output-header">
+
               <label class="form-label fw-semibold small mb-0">Tailored Resume</label>
+
               <div style="display:flex;gap:6px;" id="tailorOutputActions" style="display:none;">
+
                 <button class="btn btn-sm btn-outline-custom" onclick="copyTailoredResume()" id="copyTailoredBtn" style="display:none;">
+
                   <i class="fas fa-copy me-1"></i>Copy
+
                 </button>
+
                 <button class="btn btn-sm" onclick="saveTailoredAndApply()" id="markAppliedBtn"
+
                         style="display:none;background:#198754;color:white;border:none;">
+
                   <i class="fas fa-check me-1"></i>Mark Applied
+
                 </button>
+
               </div>
+
             </div>
+
             <div id="tailorOutputArea" style="min-height:400px;">
+
               <div class="empty-state" style="padding:40px 20px;">
+
                 <i class="fas fa-magic d-block mb-2"></i>
+
                 <p style="font-size:13px;">Tailored resume will appear here.</p>
+
               </div>
+
             </div>
+
             <div id="tailorApplyLink" style="display:none;" class="apply-link-section mt-2">
+
               <div class="fw-semibold small mb-1" style="color:#065f46;">
+
                 <i class="fas fa-external-link-alt me-1"></i>Apply Now
+
               </div>
+
               <a id="applyLinkAnchor" href="#" target="_blank" class="btn btn-sm btn-success">
+
                 Open Application →
+
               </a>
+
             </div>
+
           </div>
+
         </div>
+
+
 
         <button class="btn btn-primary-custom tailor-generate-btn mt-3" onclick="runTailor()" id="tailorBtn">
+
           <i class="fas fa-magic me-2"></i>Generate Tailored Resume
+
         </button>
+
         <div id="tailorLoadingMsg" style="display:none;text-align:center;padding:8px 0;color:var(--muted);font-size:13px;">
+
           <span class="spinner-border spinner-border-sm me-2" style="color:var(--primary);"></span>
+
           Gemini is rewriting your bullets...
+
         </div>
+
         <div id="tailorErrorMsg" style="display:none;" class="alert alert-danger mt-2 small"></div>
+
       </div>
+
     </div>
+
+
 
     <!-- ==================== TAB 4: RESUME ==================== -->
+
     <div id="tab-resume" class="tab-pane">
+
       <div class="tab-section">
+
         <div class="section-title">My Resume</div>
+
         <div class="section-subtitle">Edit your base resume. Changes save to GitHub.</div>
 
+
+
         <textarea id="resumeTextarea" class="resume-textarea"
+
                   placeholder="Your resume content..."
+
                   oninput="updateCharCount()"></textarea>
+
         <div class="char-count" id="charCount">0 characters</div>
+
         <div class="last-saved-text" id="resumeLastSaved"></div>
 
+
+
         <div class="mt-3 d-flex gap-2">
+
           <button class="btn btn-primary-custom" onclick="saveResume()" id="saveResumeBtn">
+
             <i class="fas fa-save me-2"></i>Save to GitHub
+
           </button>
+
         </div>
+
       </div>
+
     </div>
 
+
+
     <!-- ==================== TAB 5: SETTINGS ==================== -->
+
     <div id="tab-settings" class="tab-pane">
+
       <div class="tab-section">
+
         <div class="section-title">Settings</div>
+
         <div class="section-subtitle">Configure your API keys and preferences.</div>
 
+
+
         <div id="settingsBanner" class="banner-alert alert alert-warning" style="display:none;">
+
           <i class="fas fa-exclamation-triangle"></i>
+
           <span>Missing API keys — app won't work until all keys are saved.</span>
+
         </div>
+
         <div id="welcomeBanner" class="banner-alert alert alert-info" style="display:none;">
+
           <i class="fas fa-hand-wave"></i>
+
           <span>Welcome! Please verify your API keys and save settings to get started.</span>
+
         </div>
+
+
 
         <!-- API Keys -->
+
         <div class="settings-card">
+
           <h6><i class="fas fa-key me-2"></i>API Keys</h6>
 
+
+
           <div class="mb-3">
+
             <label class="form-label small fw-semibold">GitHub Personal Access Token</label>
+
             <div class="input-password-wrapper">
+
               <input type="password" id="settingsGithubToken" class="form-control" placeholder="ghp_...">
+
               <button class="toggle-eye" onclick="toggleEye('settingsGithubToken', this)" type="button">
+
                 <i class="fas fa-eye"></i>
+
               </button>
+
             </div>
+
             <div class="form-text">Needs repo read/write access to <strong>jfind-data</strong> repo.</div>
+
+          </div>
+
+
+
+          <div class="mb-2">
+
+            <label class="form-label small fw-semibold">JSearch API Key 1 <span style="color:var(--muted);font-weight:400;">(required)</span></label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsJsearchKey" class="form-control" placeholder="RapidAPI key...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey', this)" type="button">
+
+                <i class="fas fa-eye"></i>
+
+              </button>
+
+            </div>
+
           </div>
 
           <div class="mb-2">
-            <label class="form-label small fw-semibold">JSearch API Key 1 <span style="color:var(--muted);font-weight:400;">(required)</span></label>
+
+            <label class="form-label small fw-semibold">JSearch API Key 2 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+
             <div class="input-password-wrapper">
-              <input type="password" id="settingsJsearchKey" class="form-control" placeholder="RapidAPI key...">
-              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey', this)" type="button">
+
+              <input type="password" id="settingsJsearchKey2" class="form-control" placeholder="RapidAPI key (2nd account)...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey2', this)" type="button"><i class="fas fa-eye"></i></button>
+
+            </div>
+
+          </div>
+
+          <div class="mb-3">
+
+            <label class="form-label small fw-semibold">JSearch API Key 3 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsJsearchKey3" class="form-control" placeholder="RapidAPI key (3rd account)...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey3', this)" type="button"><i class="fas fa-eye"></i></button>
+
+            </div>
+
+          </div>
+
+          <!-- Change 7: JSearch keys 4 and 5 -->
+          <div class="mb-2">
+
+            <label class="form-label small fw-semibold">JSearch API Key 4
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsJsearchKey4" class="form-control" placeholder="RapidAPI key (4th account)...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey4', this)" type="button">
                 <i class="fas fa-eye"></i>
               </button>
+
             </div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label small fw-semibold">JSearch API Key 2 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
-            <div class="input-password-wrapper">
-              <input type="password" id="settingsJsearchKey2" class="form-control" placeholder="RapidAPI key (2nd account)...">
-              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey2', this)" type="button"><i class="fas fa-eye"></i></button>
-            </div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">JSearch API Key 3 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
-            <div class="input-password-wrapper">
-              <input type="password" id="settingsJsearchKey3" class="form-control" placeholder="RapidAPI key (3rd account)...">
-              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey3', this)" type="button"><i class="fas fa-eye"></i></button>
-            </div>
-            <div class="form-text">3 keys = 600 searches/month. Requests rotate Key 1 → 2 → 3 → 1...</div>
+
           </div>
 
+          <div class="mb-3">
+
+            <label class="form-label small fw-semibold">JSearch API Key 5
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsJsearchKey5" class="form-control" placeholder="RapidAPI key (5th account)...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsJsearchKey5', this)" type="button">
+                <i class="fas fa-eye"></i>
+              </button>
+
+            </div>
+
+            <div class="form-text">5 keys = 1,000 searches/month (200/account). Requests rotate Key 1 → 2 → 3 → 4 → 5 → 1...</div>
+
+          </div>
+
+
+
           <div class="mb-2">
+
             <label class="form-label small fw-semibold">Gemini API Key 1 <span style="color:var(--muted);font-weight:400;">(required)</span></label>
             <div class="input-password-wrapper">
+
               <input type="password" id="settingsGeminiKey" class="form-control" placeholder="AIza...">
+
               <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey', this)" type="button"><i class="fas fa-eye"></i></button>
+
             </div>
+
           </div>
+
           <div class="mb-2">
+
             <label class="form-label small fw-semibold">Gemini API Key 2 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+
             <div class="input-password-wrapper">
+
               <input type="password" id="settingsGeminiKey2" class="form-control" placeholder="AIza...">
+
               <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey2', this)" type="button"><i class="fas fa-eye"></i></button>
+
             </div>
+
           </div>
+
           <div class="mb-3">
+
             <label class="form-label small fw-semibold">Gemini API Key 3 <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span></label>
+
             <div class="input-password-wrapper">
+
               <input type="password" id="settingsGeminiKey3" class="form-control" placeholder="AIza...">
+
               <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey3', this)" type="button"><i class="fas fa-eye"></i></button>
+
             </div>
-            <div class="form-text">3 keys = 3× rate limit. Requests rotate Key 1 → 2 → 3 → 1...</div>
+
           </div>
+
+          <!-- Change 7: Gemini keys 4, 5, 6, 7 -->
+          <div class="mb-2">
+
+            <label class="form-label small fw-semibold">Gemini API Key 4
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsGeminiKey4" class="form-control" placeholder="AIza...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey4', this)" type="button">
+                <i class="fas fa-eye"></i>
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="mb-2">
+
+            <label class="form-label small fw-semibold">Gemini API Key 5
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsGeminiKey5" class="form-control" placeholder="AIza...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey5', this)" type="button">
+                <i class="fas fa-eye"></i>
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="mb-2">
+
+            <label class="form-label small fw-semibold">Gemini API Key 6
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsGeminiKey6" class="form-control" placeholder="AIza...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey6', this)" type="button">
+                <i class="fas fa-eye"></i>
+              </button>
+
+            </div>
+
+          </div>
+
+          <div class="mb-3">
+
+            <label class="form-label small fw-semibold">Gemini API Key 7
+              <span style="color:var(--muted);font-weight:400;">(optional — round-robin)</span>
+            </label>
+
+            <div class="input-password-wrapper">
+
+              <input type="password" id="settingsGeminiKey7" class="form-control" placeholder="AIza...">
+
+              <button class="toggle-eye" onclick="toggleEye('settingsGeminiKey7', this)" type="button">
+                <i class="fas fa-eye"></i>
+              </button>
+
+            </div>
+
+            <div class="form-text">7 keys = 7× rate limit for all AI features. Free at console.cloud.google.com. Requests rotate Key 1 → 2 → ... → 7 → 1...</div>
+
+          </div>
+
         </div>
+
+
 
         <!-- Preferences -->
         <div class="settings-card">
+
           <h6><i class="fas fa-sliders-h me-2"></i>Search Preferences</h6>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Default Search Query</label>
-            <input type="text" id="settingsDefaultQuery" class="form-control"
-                   placeholder="e.g. Operations Manager San Diego">
-          </div>
+
 
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Search Presets (one per line)</label>
-            <textarea id="settingsPresets" class="form-control" rows="7"
-                      style="font-family:'Courier New',monospace;font-size:13px;"
-                      placeholder="Operations Manager San Diego&#10;Project Manager San Diego&#10;Marketing Operations Manager&#10;..."></textarea>
-            <div class="form-text">One query per line. These appear in the preset dropdown on the Search tab.</div>
+
+            <label class="form-label small fw-semibold">Default Search Query</label>
+
+            <input type="text" id="settingsDefaultQuery" class="form-control"
+
+                   placeholder="e.g. Operations Manager San Diego">
+
           </div>
+
+
+
+          <div class="mb-3">
+
+            <label class="form-label small fw-semibold">Search Presets (one per line)</label>
+
+            <textarea id="settingsPresets" class="form-control" rows="7"
+
+                      style="font-family:'Courier New',monospace;font-size:13px;"
+
+                      placeholder="Operations Manager San Diego&#10;Project Manager San Diego&#10;Marketing Operations Manager&#10;..."></textarea>
+
+            <div class="form-text">One query per line. These appear in the preset dropdown on the Search tab.</div>
+
+          </div>
+
         </div>
+
+
 
         <!-- Actions -->
+
         <div class="d-flex gap-2 flex-wrap mb-4">
+
           <button class="btn btn-primary-custom" onclick="saveSettings()" id="saveSettingsBtn">
+
             <i class="fas fa-save me-2"></i>Save Settings
+
           </button>
+
           <button class="btn btn-outline-custom" onclick="testConnections()" id="testConnectionsBtn">
+
             <i class="fas fa-plug me-2"></i>Test Connections
+
           </button>
+
         </div>
 
+
+
         <!-- Connection Results -->
+
         <div id="connectionResults" style="display:none;" class="settings-card">
+
           <h6><i class="fas fa-network-wired me-2"></i>Connection Status</h6>
+
           <div id="connResultsBody"></div>
+
         </div>
+
       </div>
+
     </div>
+
+
 
   </div><!-- end mainContent -->
 
+
+
   <!-- Mobile Tab Bar (bottom) -->
+
   <nav class="tab-bar-mobile" id="mobileTabBar">
+
     <button class="tab-btn-mobile" onclick="showTab('search')" id="mt-search">
+
       <i class="fas fa-search"></i>
+
       <span>Search</span>
+
     </button>
+
     <button class="tab-btn-mobile" onclick="showTab('saved')" id="mt-saved">
+
       <i class="fas fa-bookmark"></i>
+
       <span>Saved</span>
+
     </button>
+
     <button class="tab-btn-mobile" onclick="showTab('tailor')" id="mt-tailor">
+
       <i class="fas fa-magic"></i>
+
       <span>Tailor</span>
+
     </button>
+
     <button class="tab-btn-mobile" onclick="showTab('resume')" id="mt-resume">
+
       <i class="fas fa-file-alt"></i>
+
       <span>Resume</span>
+
     </button>
+
     <button class="tab-btn-mobile" onclick="showTab('settings')" id="mt-settings">
+
       <i class="fas fa-cog"></i>
+
       <span>Settings</span>
+
     </button>
+
   </nav>
 
+
+
   <!-- Job Detail Modal -->
+
   <div class="modal fade" id="jobDetailModal" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
+
       <div class="modal-content">
+
         <div class="modal-header" style="background:var(--dark);color:white;border:none;">
+
           <div style="flex:1;min-width:0;">
+
             <h5 class="modal-title fw-bold mb-1" id="modalJobTitle" style="font-size:17px;line-height:1.3;"></h5>
+
             <div id="modalJobMeta" style="font-size:13px;color:rgba(255,255,255,0.65);"></div>
+
           </div>
+
           <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
+
         </div>
+
         <div class="modal-body" style="padding:0;">
+
           <!-- Quick info bar -->
+
           <div id="modalQuickInfo" style="background:#f8f9fa;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
+
           <!-- Gemini analysis section -->
+
           <div id="modalGeminiSection" style="padding:16px 20px;border-bottom:1px solid var(--border);display:none;">
+
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+
               <i class="fas fa-robot" style="color:var(--primary);"></i>
+
               <span style="font-weight:700;font-size:14px;color:var(--dark);">AI Analysis</span>
+
               <span id="modalGeminiSpinner" class="spinner-border spinner-border-sm ms-1" style="color:var(--primary);display:none;"></span>
+
               <span style="font-size:11px;color:var(--muted);margin-left:auto;">legitimacy · fit · keywords</span>
+
             </div>
+
             <div id="modalGeminiOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
+
           </div>
+
           <!-- Match Score section -->
+
           <div id="modalMatchSection" style="padding:16px 20px;border-bottom:1px solid var(--border);display:none;">
+
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+
               <i class="fas fa-user-check" style="color:#0dcaf0;"></i>
+
               <span style="font-weight:700;font-size:14px;color:var(--dark);">My Match</span>
+
               <span id="modalMatchSpinner" class="spinner-border spinner-border-sm ms-1" style="color:#0dcaf0;display:none;"></span>
+
               <span style="font-size:11px;color:var(--muted);margin-left:auto;">how well you fit this role</span>
+
             </div>
+
             <div id="modalMatchOutput" style="font-size:13px;line-height:1.6;color:#333;"></div>
+
           </div>
+
+          <!-- Change 6: Deep Analysis Section — inserted after My Match, before Full JD -->
+          <div id="modalDeepSection" style="display:none;padding:16px 20px;border-bottom:1px solid var(--border);">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+
+              <div style="display:flex;align-items:center;gap:8px;">
+
+                <i class="fas fa-microscope" style="color:#6f42c1;font-size:16px;"></i>
+
+                <strong style="font-size:14px;color:#1a1a2e;">Deep Analysis</strong>
+
+                <span style="font-size:12px;color:var(--muted);">company · career fit · resume strategy</span>
+
+              </div>
+
+              <span id="modalDeepSpinner" class="spinner-border spinner-border-sm"
+                    style="display:none;color:var(--primary);" role="status"></span>
+
+            </div>
+
+            <button id="modalDeepAnalysisBtn"
+                    class="btn btn-outline-custom btn-sm"
+                    onclick="triggerDeepAnalysis()"
+                    style="margin-bottom:12px;">
+              <i class="fas fa-microscope me-2"></i>Run Deep Analysis
+            </button>
+
+            <div id="modalDeepOutput"></div>
+
+          </div>
+
           <!-- Full JD (collapsible) -->
+
           <div style="padding:12px 20px 20px 20px;">
             <button onclick="toggleJD()" id="toggleJDBtn"
+
               style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+
               <span><i class="fas fa-file-alt me-2"></i>Full Job Description</span>
+
               <i class="fas fa-chevron-down" id="toggleJDIcon"></i>
+
             </button>
+
             <div id="modalJobDescription" style="font-size:13px;line-height:1.7;color:#333;white-space:pre-wrap;margin-top:10px;display:none;max-height:400px;overflow-y:auto;padding:12px;background:#f8f9fa;border-radius:6px;border:1px solid var(--border);"></div>
+
           </div>
+
         </div>
-        <div class="modal-footer" style="border-top:1px solid var(--border);gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-sm btn-outline-custom" id="modalSaveBtn" onclick="modalSaveJob()">
-            <i class="fas fa-bookmark me-1"></i>Save Job
-          </button>
-          <button class="btn btn-sm btn-primary-custom" id="modalTailorBtn" onclick="modalTailor()">
-            <i class="fas fa-magic me-1"></i>Tailor Resume →
-          </button>
-          <a id="modalApplyBtn" href="#" target="_blank" class="btn btn-sm btn-success">
-            <i class="fas fa-external-link-alt me-1"></i>Apply Now
-          </a>
+
+        <!-- Change 2: 3 buttons on one row, no wrapping -->
+        <div class="modal-footer" style="padding:12px 16px;border-top:1px solid var(--border);">
+
+          <div style="display:flex;gap:8px;width:100%;">
+
+            <button id="modalSaveBtn" class="btn btn-outline-custom"
+                    onclick="modalSaveJob()"
+                    style="flex:1;min-height:44px;font-size:14px;white-space:nowrap;">
+              <i class="fas fa-bookmark me-1"></i>Save Job
+            </button>
+
+            <button class="btn btn-primary-custom"
+                    onclick="modalTailor()"
+                    style="flex:1;min-height:44px;font-size:14px;white-space:nowrap;">
+              <i class="fas fa-magic me-1"></i>Tailor →
+            </button>
+
+            <a id="modalApplyBtn" href="#" target="_blank"
+               class="btn btn-success"
+               style="flex:1;min-height:44px;font-size:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap;">
+              <i class="fas fa-external-link-alt me-1"></i>Apply Now
+            </a>
+
+          </div>
+
         </div>
       </div>
+
     </div>
+
   </div>
 
+
+
   <!-- Bootstrap 5 JS -->
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+
+
   <script>
+
   // ============================================================
+
   //  GLOBAL STATE
+
   // ============================================================
+
   let SETTINGS = {};
+
   let SAVED_JOBS = [];
+
   let SAVED_JOBS_SHA = null;
+
   let RESUME_SHA = null;
+
   let SETTINGS_SHA = null;
+
   let RESUME_CONTENT = '';
+
   let CURRENT_TAB = 'search';
+
   let CURRENT_TAILOR_JOB_ID = null; // track which saved job we're tailoring
+
   // Cache for search results — avoids embedding large JSON in HTML data-attributes
+
   const SEARCH_RESULTS_CACHE = {};
+
   // Gemini round-robin key index
+
   let GEMINI_KEY_INDEX = 0;
+
   // JSearch round-robin key index (supports up to 3 RapidAPI accounts = 600 req/month)
+
   let JSEARCH_KEY_INDEX = 0;
+
   // Seen jobs — stored in saved-jobs.json alongside SAVED_JOBS
+
   let SEEN_JOB_IDS = new Set();         // fast O(1) lookup
+
   let SEEN_PENDING_WRITE = false;       // debounce: batch writes instead of one per card open
+
   let SEEN_WRITE_TIMER = null;
 
+
+
   // Dismissed jobs — stored in saved-jobs.json as dismissedJobIds
+
   let DISMISSED_JOB_IDS = new Set();   // permanently dismissed jobs
+
   let DISMISS_WRITE_TIMER = null;       // debounce timer for dismiss writes
 
+
+
   // Pagination state — tracks the current search for Load More
+
   let CURRENT_SEARCH_QUERY = '';        // last search query
+
   let CURRENT_SEARCH_FILTERS = {};      // last date filter + remote toggle state
+
   let SEARCH_GEN = 0;                   // increments on each new search — Load More checks before appending
+
   let CURRENT_PAGE = 1;                 // current page number loaded
 
+
+
   // Default settings (no credentials hardcoded — enter in Settings tab on first run)
+
   const DEFAULT_SETTINGS = {
+
     githubOwner: 'GYCoder-25',
+
     appRepo: 'jfind',
+
     dataRepo: 'jfind-data',
+
     geminiKey: '',        // Enter your Gemini API key in Settings
+
     geminiKey2: '',       // Optional second Gemini key (round-robin)
+
     geminiKey3: '',       // Optional third Gemini key (round-robin)
+
+    geminiKey4: '',       // Optional fourth Gemini key (round-robin)
+
+    geminiKey5: '',       // Optional fifth Gemini key (round-robin)
+
+    geminiKey6: '',       // Optional sixth Gemini key (round-robin)
+
+    geminiKey7: '',       // Optional seventh Gemini key (round-robin)
+
     jsearchKey: '',       // Enter your RapidAPI JSearch key in Settings
+
     jsearchKey2: '',      // Optional second JSearch key (round-robin — 2nd RapidAPI account)
+
     jsearchKey3: '',      // Optional third JSearch key (round-robin — 3rd RapidAPI account)
+
+    jsearchKey4: '',      // Optional fourth JSearch key (round-robin — 4th RapidAPI account)
+
+    jsearchKey5: '',      // Optional fifth JSearch key (round-robin — 5th RapidAPI account)
     githubToken: '',      // Enter your GitHub Personal Access Token in Settings
+
     geminiModel: 'gemini-2.5-flash',
+
     jsearchUrl: 'https://jsearch.p.rapidapi.com/search',
+
     githubApi: 'https://api.github.com',
+
     defaultQuery: 'Operations Manager San Diego',
+
     searchPresets: [
+
       'Operations Manager San Diego',
+
       'Operations Manager remote',
+
       'Project Manager San Diego',
+
       'Project Manager remote',
+
       'Technical Project Manager San Diego',
+
       'Technical Project Manager remote',
+
       'Marketing Operations Manager San Diego',
+
       'Marketing Operations Manager remote',
+
       'Program Manager San Diego',
+
       'Program Manager remote',
+
       'Business Operations Manager San Diego',
+
       'Business Operations Manager remote',
+
       'Digital Marketing Manager San Diego',
+
       'Digital Marketing Manager remote',
+
       'Marketing Project Manager San Diego',
+
       'Marketing Project Manager remote',
+
       'Product Operations Manager San Diego',
+
       'Product Operations Manager remote'
+
     ]
+
   };
 
+
+
   // ============================================================
+
   //  GEMINI ROUND-ROBIN KEY ROTATION
+
   // ============================================================
+
   function getNextGeminiKey() {
+
     // Build array of only non-empty keys
+
     const keys = [
+
       SETTINGS.geminiKey,
+
       SETTINGS.geminiKey2,
-      SETTINGS.geminiKey3
+
+      SETTINGS.geminiKey3,
+
+      SETTINGS.geminiKey4,
+
+      SETTINGS.geminiKey5,
+
+      SETTINGS.geminiKey6,
+
+      SETTINGS.geminiKey7
+
     ].filter(k => k && k.trim().length > 0);
 
+
     if (keys.length === 0) return '';
+
     // Rotate index, wrap around
+
     GEMINI_KEY_INDEX = GEMINI_KEY_INDEX % keys.length;
+
     const key = keys[GEMINI_KEY_INDEX];
+
     GEMINI_KEY_INDEX = (GEMINI_KEY_INDEX + 1) % keys.length;
+
     return key;
+
   }
+
+
 
   function getNextJsearchKey() {
-    // Build array of only non-empty JSearch keys (up to 3 RapidAPI accounts)
+
+    // Build array of only non-empty JSearch keys (up to 5 RapidAPI accounts)
+
     const keys = [
+
       SETTINGS.jsearchKey,
+
       SETTINGS.jsearchKey2,
-      SETTINGS.jsearchKey3
+
+      SETTINGS.jsearchKey3,
+
+      SETTINGS.jsearchKey4,
+
+      SETTINGS.jsearchKey5
+
     ].filter(k => k && k.trim().length > 0);
 
+
     if (keys.length === 0) return '';
+
     // Rotate index, wrap around — spreads 200 req/month limit across all accounts
+
     JSEARCH_KEY_INDEX = JSEARCH_KEY_INDEX % keys.length;
+
     const key = keys[JSEARCH_KEY_INDEX];
+
     JSEARCH_KEY_INDEX = (JSEARCH_KEY_INDEX + 1) % keys.length;
+
     return key;
+
   }
 
+
+
   // ============================================================
+
   //  DEFAULT RESUME
+
   // ============================================================
+
   const DEFAULT_RESUME = `ANGELO MOYA
+
 angelo@riocreations.net | linkedin.com/in/angelomoya | San Diego, CA USA | (909) 847-2664
+
+
 
 EXPERIENCE
 
+
+
 Operations Lead & Full-Stack Developer | November 2019 - Present
+
 Techstyle Fashion Group (Fabletics, Yitty, Scrubs)
 
+
+
 • Self-initiated and solo-built a full-stack CRM managing 44,000+ influencer orders across 3 departments, eliminating 3,000+ hours/year of manual work (equivalent to 1.5 full-time employees)
+
 • Drove bulk automation adoption to 72-76% across all departments through custom-built export/import tools and real-time inventory integrations, achieving 0-1% manual intervention rate
+
 • Presented impact metrics to Senior Director, resulting in C-suite briefing (Chief Growth Officer) and selection as foundation for company-wide AI initiative
+
 • Led cross-functional collaboration with Engineering, Risk Management, and Product teams to resolve systemic address validation issues affecting fulfillment
+
 • Architected scalable "Hub-and-Spoke" system supporting 3 distinct department workflows from single codebase, with shared Core Inventory reducing data redundancy by 40%
+
 • Integrated AI (Gemini) for automated performance insights including executive summaries, product analysis, and actionable recommendations
+
 • Built suite of automation tools integrating with internal fulfillment systems for real-time inventory checks, SKU lookups, and fulfillment status updates
+
 • Implemented multi-tiered Role-Based Access Control (RBAC) and comprehensive Admin Dashboard for user management, system configuration, and brand assets
+
 • Integrated geocoding APIs for address validation, reducing warehouse shipping failures from malformed addresses
 
+
+
 Airport Facilities Supervisor | July 2024 - Present
+
 SP+ (SP Plus)
 
+
+
 • Supervise and coordinate customer service activities, ensuring efficient escort of passengers to transportation options
+
 • Manage control center operations, providing technical support to customers exiting the parking lot
+
 • Monitor performance and resolve technical issues of parking pay machines
+
 • Lead and train new employees and provide ongoing coaching for high standards of service
 
+
+
 Digital Marketing Specialist | December 2016 - November 2019
+
 Confie
 
+
+
 • Managed and executed organic and paid advertising for 15 nationwide brands, overseeing a $400K monthly budget, reporting directly to VP of Marketing
+
 • Led A/B testing and SQL data optimization, enhancing campaign effectiveness and improving website user experience
+
 • Revamped reporting and analytics systems, leading to a 90% increase in advertising spending efficiency
+
 • Awarded Employee of the Year (We Care) for analytics innovation
 
+
+
 Buyer | August 2014 - November 2016
+
 Safran Aerospace
 
+
+
 • Optimized MRP Action Messages, achieving a 98% on-time response rate to procurement needs
+
 • Led vendor development initiatives and negotiated prices, resulting in 15% average cost savings on procurement costs
+
 • Demonstrated daily expertise in MRP systems, leading to 40% increase in inventory turnover
 
+
+
 Network Specialist / Team Lead | July 2012 - August 2015
+
 Telvista Inc.
 
+
+
 • Provided advanced support for gateway configuration, network firewalls, and resolving bandwidth/speed issues
+
 • Assisted with onboarding of new employees, including configuring and deploying operating systems
+
 • Delivered exceptional customer service by prioritizing tasks, managing stakeholders, and handling technical issues
 
+
+
 EDUCATION
+
 High School Diploma | September 2008 - June 2012 | Garey High School
 
+
+
 CERTIFICATIONS
+
 Google AI Essentials | Google/Coursera | March 2026
+
 Google Adwords (Search, Display, Video) | Google | March 2024
+
 Google Analytics GA4 | Google | March 2024
+
 Social Media Marketing | HubSpot | March 2024
+
 Digital Marketing | HubSpot | March 2024
 
+
+
 SKILLS
+
 Technical: Full Stack Development, REST API Integration, Google Apps Script, Process Automation, AI Integration (Gemini), Database Management, Systems Architecture, CRM Development, Google Workspace
+
 Operations: Project Management, Cross-Functional Leadership, Vendor Management, Data Analysis, Performance Tracking, Cost Optimization, Inventory Management, Stakeholder Management
+
 Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing, A/B Testing, Campaign Analytics`;
 
+
+
   // ============================================================
+
   //  GITHUB API
+
   // ============================================================
+
   async function githubRead(filename) {
+
     let dataSha = null; // track SHA separately so catch block can return it
+
     try {
+
       const url = `${DEFAULT_SETTINGS.githubApi}/repos/${DEFAULT_SETTINGS.githubOwner}/${DEFAULT_SETTINGS.dataRepo}/contents/${filename}`;
+
       const resp = await fetch(url, {
+
         headers: {
+
           'Authorization': `token ${SETTINGS.githubToken || DEFAULT_SETTINGS.githubToken}`,
+
           'Accept': 'application/vnd.github.v3+json'
+
         }
+
       });
+
       if (resp.status === 404) return { content: null, sha: null };
+
       if (!resp.ok) throw new Error(`GitHub read ${resp.status}`);
+
       const data = await resp.json();
+
       dataSha = data.sha; // capture SHA before decode attempt
+
       // Use TextDecoder for proper UTF-8 base64 decoding (replaces broken escape() hack)
+
       const b64 = data.content.replace(/\n/g, '');
+
       const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+
       const raw = new TextDecoder('utf-8').decode(bytes);
+
       const parsed = JSON.parse(raw);
+
       return { content: parsed, sha: dataSha };
+
     } catch(e) {
+
       if (e.message && e.message.includes('404')) return { content: null, sha: null };
+
       console.error('[JFIND githubRead]', e);
+
       // Return SHA even on decode/parse error — prevents 422 on next write
+
       return { content: null, sha: dataSha };
+
     }
+
   }
+
+
 
   async function githubWrite(filename, content, sha) {
+
     const url = `${DEFAULT_SETTINGS.githubApi}/repos/${DEFAULT_SETTINGS.githubOwner}/${DEFAULT_SETTINGS.dataRepo}/contents/${filename}`;
+
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+
     const body = {
+
       message: `Update ${filename}`,
+
       content: encoded
+
     };
+
     if (sha) body.sha = sha;
 
+
+
     const resp = await fetch(url, {
+
       method: 'PUT',
+
       headers: {
+
         'Authorization': `token ${SETTINGS.githubToken || DEFAULT_SETTINGS.githubToken}`,
+
         'Accept': 'application/vnd.github.v3+json',
+
         'Content-Type': 'application/json'
+
       },
+
       body: JSON.stringify(body)
+
     });
+
     if (!resp.ok) {
+
       let errText = '';
+
       try { 
+
         const errJson = await resp.json();
+
         errText = errJson.message || JSON.stringify(errJson);
+
       } catch(_) { errText = await resp.text().catch(() => ''); }
+
       throw new Error(`GitHub write ${resp.status}: ${errText}`);
+
     }
+
     const data = await resp.json();
+
     return data.content.sha;
+
   }
+
+
 
   async function githubWriteWithRetry(filename, content, sha) {
+
     try {
+
       return await githubWrite(filename, content, sha);
+
     } catch(e) {
+
       if (e.message && e.message.includes('409')) {
+
         showToast('Sync conflict — refreshing...', 'warning');
+
         const fresh = await githubRead(filename);
+
         return await githubWrite(filename, content, fresh.sha);
+
       }
+
       // Handle 422 (stale/missing SHA) — happens on fresh device when file already exists on GitHub.
+
       // On first load, SETTINGS_SHA is null because the token wasn't available for the initial read.
+
       // By the time we reach this retry, the token IS set, so githubRead succeeds and returns the real SHA.
+
       if (e.message && e.message.includes('422')) {
+
         showToast('Fetching latest sync state...', 'warning');
+
         const fresh = await githubRead(filename);
+
         return await githubWrite(filename, content, fresh.sha);
+
       }
+
       throw e;
+
     }
+
   }
 
+
+
   // ============================================================
+
   //  ERROR HANDLER
+
   // ============================================================
+
   function handleApiError(error, context) {
+
     const msg = error.message || String(error);
+
     let userMsg = 'Something went wrong. Please try again.';
 
+
+
     if (msg.includes('401') || msg.includes('403') || msg.includes('Bad credentials') || msg.includes('bad_credentials'))
+
       userMsg = `GitHub token invalid or expired — generate a new PAT in Settings (${context})`;
+
     else if (msg.includes('422') || msg.includes('Unprocessable'))
+
       userMsg = `Sync error — file may be out of date. Try saving again. (${context})`;
+
     else if (msg.includes('429'))
+
       userMsg = 'Rate limit reached — try again in a moment';
+
     else if (msg.includes('409'))
+
       userMsg = 'Sync conflict — refreshing data...';
+
     else if (msg.includes('NetworkError') || msg.includes('Failed to fetch'))
+
       userMsg = 'Check your internet connection';
+
     else if (msg.includes('Gemini returned no output'))
+
       userMsg = 'Gemini returned no output — try again';
+
     else if (msg.includes('GitHub write') || msg.includes('GitHub read'))
+
       userMsg = `GitHub error — check your PAT token in Settings (${context}): ${msg.substring(0, 80)}`;
 
+
+
     showToast(userMsg, 'danger');
+
     console.error(`[JFIND ${context}]`, error);
+
     return userMsg;
+
   }
 
+
+
   // ============================================================
+
   //  TOAST
-  // ============================================================
-  function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast-notification toast-${type}`;
-    toast.textContent = message;
-    container.appendChild(toast);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => toast.classList.add('show'));
-    });
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 350);
-    }, 3200);
-  }
 
   // ============================================================
-  //  TAB SWITCHING
+
+  function showToast(message, type = 'info') {
+
+    const container = document.getElementById('toastContainer');
+
+    const toast = document.createElement('div');
+
+    toast.className = `toast-notification toast-${type}`;
+
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+
+      requestAnimationFrame(() => toast.classList.add('show'));
+
+    });
+
+    setTimeout(() => {
+
+      toast.classList.remove('show');
+
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 350);
+
+    }, 3200);
+
+  }
+
+
+
   // ============================================================
+
+  //  TAB SWITCHING
+
+  // ============================================================
+
   function showTab(tabName) {
+
     // Hide all panes
+
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
     // Remove active from all tab buttons
+
     document.querySelectorAll('.tab-btn, .tab-btn-mobile').forEach(b => b.classList.remove('active'));
 
+
+
     // Show target pane
+
     const pane = document.getElementById('tab-' + tabName);
+
     if (pane) pane.classList.add('active');
 
+
+
     // Mark desktop + mobile buttons active
+
     const dtBtn = document.getElementById('dt-' + tabName);
+
     const mtBtn = document.getElementById('mt-' + tabName);
+
     if (dtBtn) dtBtn.classList.add('active');
+
     if (mtBtn) mtBtn.classList.add('active');
+
+
 
     CURRENT_TAB = tabName;
 
+
+
     // Tab-specific on-show logic
+
     if (tabName === 'saved') renderSavedJobs();
 
+
+
     // Scroll to top
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
   }
 
+
+
   // ============================================================
+
   //  APP INITIALIZATION
+
   // ============================================================
+
   async function initApp() {
+
     document.getElementById('loadingStatusText').textContent = 'Loading settings...';
 
+
+
     // Bootstrap token from localStorage so any device can authenticate the GitHub read
+
     // (Solves mobile "asking for keys" problem — localStorage persists across sessions on same device)
+
     try {
+
       const cachedToken = localStorage.getItem('jfind_token');
+
       if (cachedToken) SETTINGS.githubToken = cachedToken;
+
     } catch(e) {}
 
+
+
     // Try to read settings from GitHub
+
     const result = await githubRead('settings.json');
 
+
+
     if (result.content && result.content.githubToken) {
+
       // Settings found — load them
+
       SETTINGS = Object.assign({}, DEFAULT_SETTINGS, result.content);
+
       SETTINGS_SHA = result.sha;
+
       populateSettingsForm();
+
       hideLoadingOverlay();
+
       showTab('search');
+
       updateSearchQuery();
+
+
 
       // Load background data
+
       loadSavedJobsBackground();
+
       loadResumeBackground();
+
     } else {
+
       // First run or missing token — pre-fill defaults, show settings
+
       SETTINGS = Object.assign({}, DEFAULT_SETTINGS);
+
       SETTINGS_SHA = result.sha; // might be null (404)
+
       populateSettingsForm();
+
       hideLoadingOverlay();
+
       showTab('settings');
+
       document.getElementById('welcomeBanner').style.display = 'flex';
+
       checkSettingsBanner();
+
     }
+
   }
+
+
 
   function hideLoadingOverlay() {
+
     const overlay = document.getElementById('appLoadingOverlay');
+
     overlay.style.transition = 'opacity 0.3s';
+
     overlay.style.opacity = '0';
+
     setTimeout(() => { overlay.style.display = 'none'; }, 300);
+
   }
+
+
 
   function updateSearchQuery() {
+
     const queryInput = document.getElementById('searchQuery');
+
     if (queryInput && SETTINGS.defaultQuery) {
+
       queryInput.value = SETTINGS.defaultQuery;
+
     }
+
     populatePresets();
+
   }
+
+
 
   function populatePresets() {
+
     const select = document.getElementById('presetSelect');
+
     if (!select) return;
+
     select.innerHTML = '<option value="">— Select Preset —</option>';
+
     const presets = SETTINGS.searchPresets || DEFAULT_SETTINGS.searchPresets;
+
     presets.forEach(p => {
+
       const opt = document.createElement('option');
+
       opt.value = p;
+
       opt.textContent = p;
+
       select.appendChild(opt);
+
     });
+
   }
+
+
 
   function applyPreset() {
+
     const select = document.getElementById('presetSelect');
+
     if (select.value) {
+
       document.getElementById('searchQuery').value = select.value;
+
     }
+
   }
+
+
 
   async function loadSavedJobsBackground() {
+
     try {
+
       const result = await githubRead('saved-jobs.json');
+
       if (result.content && Array.isArray(result.content.jobs)) {
+
         SAVED_JOBS = result.content.jobs;
+
         SAVED_JOBS_SHA = result.sha;
+
         // Load seen job IDs (cross-device sync)
+
         if (Array.isArray(result.content.seenJobIds)) {
+
           SEEN_JOB_IDS = new Set(result.content.seenJobIds);
+
           updateSeenCountLabel();
+
         }
+
         // Load dismissed job IDs (cross-device sync)
+
         if (Array.isArray(result.content.dismissedJobIds)) {
+
           DISMISSED_JOB_IDS = new Set(result.content.dismissedJobIds);
+
           applyDismissedFilter(); // retroactively hide dismissed cards if search ran before background load finished
+
         }
+
       } else {
+
         SAVED_JOBS = [];
+
         SAVED_JOBS_SHA = result.sha; // null if 404
+
       }
+
       updateSavedCountBadge();
+
       // Fix race condition: re-render Saved tab if user navigated there before load completed
+
       if (CURRENT_TAB === 'saved') renderSavedJobs();
+
     } catch(e) {
+
       console.error('[JFIND loadSavedJobs]', e);
+
       SAVED_JOBS = [];
+
     }
+
   }
+
+
 
   async function loadResumeBackground() {
+
     try {
+
       const result = await githubRead('resume.json');
+
       if (result.content && result.content.content) {
+
         RESUME_CONTENT = result.content.content;
+
         RESUME_SHA = result.sha;
+
         if (result.content.lastUpdated) {
+
           document.getElementById('resumeLastSaved').textContent =
+
             'Last saved: ' + new Date(result.content.lastUpdated).toLocaleString();
+
         }
+
       } else {
+
         RESUME_CONTENT = DEFAULT_RESUME;
+
         RESUME_SHA = null;
+
       }
+
       document.getElementById('resumeTextarea').value = RESUME_CONTENT;
+
       updateCharCount();
+
     } catch(e) {
+
       console.error('[JFIND loadResume]', e);
+
       RESUME_CONTENT = DEFAULT_RESUME;
+
       document.getElementById('resumeTextarea').value = RESUME_CONTENT;
+
       updateCharCount();
+
     }
+
   }
 
+
+
   // ============================================================
+
   //  SETTINGS
+
   // ============================================================
+
   function populateSettingsForm() {
+
     const s = SETTINGS;
+
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
     set('settingsGithubToken', s.githubToken);
+
     set('settingsJsearchKey', s.jsearchKey);
+
     set('settingsJsearchKey2', s.jsearchKey2);
+
     set('settingsJsearchKey3', s.jsearchKey3);
+
+    set('settingsJsearchKey4', s.jsearchKey4);
+
+    set('settingsJsearchKey5', s.jsearchKey5);
+
     set('settingsGeminiKey', s.geminiKey);
+
     set('settingsGeminiKey2', s.geminiKey2);
+
     set('settingsGeminiKey3', s.geminiKey3);
+
+    set('settingsGeminiKey4', s.geminiKey4);
+
+    set('settingsGeminiKey5', s.geminiKey5);
+
+    set('settingsGeminiKey6', s.geminiKey6);
+
+    set('settingsGeminiKey7', s.geminiKey7);
     set('settingsDefaultQuery', s.defaultQuery);
+
     const presets = s.searchPresets || DEFAULT_SETTINGS.searchPresets;
+
     const presetsEl = document.getElementById('settingsPresets');
+
     if (presetsEl) presetsEl.value = Array.isArray(presets) ? presets.join('\n') : presets;
+
     checkSettingsBanner();
+
   }
+
+
 
   function checkSettingsBanner() {
+
     const s = SETTINGS;
+
     const missing = !s.githubToken || !s.jsearchKey || !s.geminiKey;
+
     document.getElementById('settingsBanner').style.display = missing ? 'flex' : 'none';
+
   }
+
+
 
   async function saveSettings() {
+
     const btn = document.getElementById('saveSettingsBtn');
+
     btn.disabled = true;
+
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
+
+
     try {
+
       const presetsRaw = document.getElementById('settingsPresets').value;
+
       const presets = presetsRaw.split('\n').map(s => s.trim()).filter(s => s.length > 0);
 
+
+
       const newSettings = {
+
         githubOwner: DEFAULT_SETTINGS.githubOwner,
+
         appRepo: DEFAULT_SETTINGS.appRepo,
+
         dataRepo: DEFAULT_SETTINGS.dataRepo,
+
         githubToken: document.getElementById('settingsGithubToken').value.trim(),
+
         jsearchKey: document.getElementById('settingsJsearchKey').value.trim(),
+
         jsearchKey2: document.getElementById('settingsJsearchKey2').value.trim(),
+
         jsearchKey3: document.getElementById('settingsJsearchKey3').value.trim(),
+
+        jsearchKey4: (document.getElementById('settingsJsearchKey4') || {value:''}).value.trim(),
+
+        jsearchKey5: (document.getElementById('settingsJsearchKey5') || {value:''}).value.trim(),
+
         geminiKey: document.getElementById('settingsGeminiKey').value.trim(),
+
         geminiKey2: document.getElementById('settingsGeminiKey2').value.trim(),
+
         geminiKey3: document.getElementById('settingsGeminiKey3').value.trim(),
+
+        geminiKey4: (document.getElementById('settingsGeminiKey4') || {value:''}).value.trim(),
+
+        geminiKey5: (document.getElementById('settingsGeminiKey5') || {value:''}).value.trim(),
+
+        geminiKey6: (document.getElementById('settingsGeminiKey6') || {value:''}).value.trim(),
+
+        geminiKey7: (document.getElementById('settingsGeminiKey7') || {value:''}).value.trim(),
         geminiModel: DEFAULT_SETTINGS.geminiModel,
+
         jsearchUrl: DEFAULT_SETTINGS.jsearchUrl,
+
         githubApi: DEFAULT_SETTINGS.githubApi,
+
         defaultQuery: document.getElementById('settingsDefaultQuery').value.trim(),
+
         searchPresets: presets,
+
         savedAt: new Date().toISOString()
+
       };
 
+
+
       // Update SETTINGS with the new token BEFORE writing — githubWrite reads SETTINGS.githubToken
+
       SETTINGS = newSettings;
+
       // Cache token in localStorage so any device can bootstrap the GitHub read on next load
+
       try { localStorage.setItem('jfind_token', newSettings.githubToken); } catch(e) {}
+
       SETTINGS_SHA = await githubWriteWithRetry('settings.json', newSettings, SETTINGS_SHA);
+
       checkSettingsBanner();
+
       updateSearchQuery();
+
       showToast('Settings saved ✓', 'success');
+
     } catch(e) {
+
       handleApiError(e, 'saveSettings');
+
     } finally {
+
       btn.disabled = false;
+
       btn.innerHTML = '<i class="fas fa-save me-2"></i>Save Settings';
+
     }
+
   }
 
+
+
   async function testConnections() {
+
     const btn = document.getElementById('testConnectionsBtn');
+
     btn.disabled = true;
+
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Testing...';
 
+
+
     const resultsDiv = document.getElementById('connectionResults');
+
     const bodyDiv = document.getElementById('connResultsBody');
+
     resultsDiv.style.display = 'block';
+
     bodyDiv.innerHTML = '<div class="text-muted small">Testing connections...</div>';
 
+
+
     const jsearchKey = document.getElementById('settingsJsearchKey').value.trim() || SETTINGS.jsearchKey;
+
     const geminiKey = document.getElementById('settingsGeminiKey').value.trim() || SETTINGS.geminiKey;
+
     const githubToken = document.getElementById('settingsGithubToken').value.trim() || SETTINGS.githubToken;
+
+
 
     const results = {};
 
+
+
     // Test JSearch
+
     try {
+
       const r = await fetch('https://jsearch.p.rapidapi.com/search?query=test&num_pages=1', {
+
         headers: {
+
           'x-rapidapi-key': jsearchKey,
+
           'x-rapidapi-host': 'jsearch.p.rapidapi.com'
+
         }
+
       });
+
       results.jsearch = r.ok || r.status === 200;
+
     } catch(e) { results.jsearch = false; }
 
+
+
     // Test Gemini
+
     try {
+
       const r = await fetch(
+
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+
         {
+
           method: 'POST',
+
           headers: { 'Content-Type': 'application/json' },
+
           body: JSON.stringify({ contents: [{ parts: [{ text: 'Say OK' }] }] })
+
         }
+
       );
+
       results.gemini = r.ok;
+
     } catch(e) { results.gemini = false; }
 
+
+
     // Test GitHub
+
     try {
+
       const r = await fetch(`https://api.github.com/repos/${DEFAULT_SETTINGS.githubOwner}/${DEFAULT_SETTINGS.dataRepo}`, {
+
         headers: { 'Authorization': `token ${githubToken}` }
+
       });
+
       results.github = r.ok;
+
     } catch(e) { results.github = false; }
 
+
+
     const items = [
+
       { key: 'jsearch', label: 'JSearch (RapidAPI)', icon: 'fas fa-search' },
+
       { key: 'gemini', label: 'Gemini AI', icon: 'fas fa-robot' },
+
       { key: 'github', label: 'GitHub Data Repo', icon: 'fab fa-github' }
+
     ];
 
+
+
     bodyDiv.innerHTML = items.map(item => `
+
       <div class="connection-result">
+
         <i class="${item.icon}" style="width:20px;color:var(--muted);"></i>
+
         <span style="flex:1;">${item.label}</span>
+
         ${results[item.key]
+
           ? '<span class="conn-ok"><i class="fas fa-check-circle me-1"></i>Connected</span>'
+
           : '<span class="conn-fail"><i class="fas fa-times-circle me-1"></i>Failed</span>'}
+
       </div>
+
     `).join('');
 
+
+
     btn.disabled = false;
+
     btn.innerHTML = '<i class="fas fa-plug me-2"></i>Test Connections';
+
   }
+
+
 
   function toggleEye(inputId, btn) {
+
     const input = document.getElementById(inputId);
+
     if (!input) return;
+
     const isPassword = input.type === 'password';
+
     input.type = isPassword ? 'text' : 'password';
+
     btn.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+
   }
 
+
+
   // ============================================================
+
   //  SEARCH
+
   // ============================================================
+
   async function runSearch() {
+
     const query = document.getElementById('searchQuery').value.trim();
+
     if (!query) { showToast('Enter a search query first', 'warning'); return; }
 
+
+
     const dateFilter = document.getElementById('dateFilter').value;
+
     const remoteOnly = document.getElementById('remoteToggle').checked;
+
     const btn = document.getElementById('searchBtn');
+
     const resultsDiv = document.getElementById('searchResults');
 
+
+
     // Reset pagination state for fresh search
+
     CURRENT_PAGE = 1;
+
     SEARCH_GEN++;                        // invalidate any in-flight Load More for the previous query
+
     CURRENT_SEARCH_QUERY = query;
+
     CURRENT_SEARCH_FILTERS = { dateFilter, remoteOnly };
+
     // Clear cache so Load More has correct index offsets on a new search
+
     Object.keys(SEARCH_RESULTS_CACHE).forEach(k => delete SEARCH_RESULTS_CACHE[k]);
 
+
+
     btn.disabled = true;
+
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
+
+
     resultsDiv.innerHTML = `
+
       <div class="loading-spinner">
+
         <div class="spinner-border mb-3" role="status"></div>
+
         <p>Searching for "${escapeHtml(query)}"...</p>
+
       </div>`;
 
+
+
     try {
+
       const jobs = await searchJobs(query, dateFilter, remoteOnly, 1);
+
       if (!jobs || jobs.length === 0) {
+
         resultsDiv.innerHTML = `
+
           <div class="empty-state">
+
             <i class="fas fa-search d-block mb-2"></i>
+
             <p>No results found. Try adjusting your search.</p>
+
           </div>`;
+
       } else {
+
         renderSearchResults(jobs, query);
+
       }
+
     } catch(e) {
+
       const msg = handleApiError(e, 'search');
+
       resultsDiv.innerHTML = `
+
         <div class="empty-state">
+
           <i class="fas fa-exclamation-triangle d-block mb-2" style="color:var(--danger);"></i>
+
           <p>${escapeHtml(msg)}</p>
+
         </div>`;
+
     } finally {
+
       btn.disabled = false;
+
       btn.innerHTML = '<i class="fas fa-search"></i>';
+
     }
+
   }
 
+
+
   async function searchJobs(query, dateFilter, remoteOnly, page = 1) {
+
     const params = new URLSearchParams({
+
       query: query,
+
       page: String(page),
+
       num_pages: '1',
+
       country: 'us',
+
       employment_types: 'FULLTIME',
+
       exclude_job_publishers: 'BeeBe,Dice'
+
     });
 
+
+
     if (dateFilter === 'today') params.set('date_posted', 'today');
+
     else if (dateFilter === '3days') params.set('date_posted', '3days');
+
     else if (dateFilter === 'week') params.set('date_posted', 'week');
+
+
 
     if (remoteOnly) params.set('work_from_home', 'true');
 
+
+
     const response = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
+
       headers: {
+
         'x-rapidapi-key': getNextJsearchKey() || DEFAULT_SETTINGS.jsearchKey,
+
         'x-rapidapi-host': 'jsearch.p.rapidapi.com'
+
       }
+
     });
 
+
+
     if (!response.ok) throw new Error(`JSearch ${response.status}`);
+
     const data = await response.json();
+
     return data.data || [];
+
   }
+
+
 
   function renderSearchResults(jobs, query) {
+
     const resultsDiv = document.getElementById('searchResults');
+
     const header = `<div class="results-header"><i class="fas fa-list-ul me-1"></i>${jobs.length} result${jobs.length === 1 ? '' : 's'} for "<strong>${escapeHtml(query)}</strong>"</div>`;
+
     // Populate cache with index keys so cards don't need to embed JSON in attributes
+
     jobs.forEach((job, idx) => { SEARCH_RESULTS_CACHE[idx] = job; });
+
     const cardsHtml = jobs.map((job, idx) => buildJobCard(job, idx)).join('');
+
     resultsDiv.innerHTML = header + cardsHtml + buildLoadMoreButton(jobs.length);
+
     // Re-apply filters (new results need filtering too)
+
     applyHideSeenFilter();
+
     applyDismissedFilter();
+
   }
+
+
 
   function buildSourceBadge(publisher) {
+
     if (!publisher) return '';
+
     const p = publisher.toLowerCase();
+
     let cls, icon, label;
+
     if (p.includes('linkedin'))       { cls = 'source-linkedin';    icon = 'fab fa-linkedin';    label = 'LinkedIn'; }
+
     else if (p.includes('indeed'))    { cls = 'source-indeed';      icon = 'fas fa-briefcase';   label = 'Indeed'; }
+
     else if (p.includes('glassdoor')) { cls = 'source-glassdoor';   icon = 'fas fa-door-open';   label = 'Glassdoor'; }
+
     else if (p.includes('ziprecruiter')) { cls = 'source-ziprecruiter'; icon = 'fas fa-bolt';    label = 'ZipRecruiter'; }
+
     else { cls = 'source-other'; icon = 'fas fa-globe'; label = publisher; }
+
     return `<span class="source-badge ${cls}"><i class="${icon}"></i>${escapeHtml(label)}</span>`;
+
   }
+
+
 
   function buildJobCard(job, cacheIdx) {
+
     const { flags, signals } = scoreJob(job);
+
     const salary = formatSalary(job);
+
     const postedText = formatPostedDate(job);
+
     const desc = (job.job_description || '').substring(0, 200).replace(/\n/g, ' ');
+
     const location = [job.job_city, job.job_state, job.job_country]
+
       .filter(Boolean).join(', ');
 
+
+
     const salaryBadge = salary
+
       ? `<span class="job-card-salary"><i class="fas fa-dollar-sign me-1"></i>${escapeHtml(salary)}</span>`
+
       : '';
 
+
+
     const flagBadges = flags.map(f =>
+
       `<span class="flag-badge"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(f)}</span>`
+
     ).join('');
 
+
+
     const signalBadges = signals.map(s => {
+
       const extra = s === 'Fresh posting' ? ' fresh-badge' : '';
+
       return `<span class="signal-badge${extra}"><i class="fas fa-check me-1"></i>${escapeHtml(s)}</span>`;
+
     }).join('');
 
+
+
     // Seen state — applied at card-build time so returning to search results shows correct state
+
     const isSeen = SEEN_JOB_IDS.has(job.job_id);
+
     const seenClass = isSeen ? ' seen-card' : '';
+
     const seenBadge = isSeen ? ' <span class="seen-badge"><i class="fas fa-eye"></i>Seen</span>' : '';
 
+
+
     // Use cache index in onclick — avoids embedding arbitrary JSON in HTML attributes
+
     return `
+
       <div class="job-card${seenClass}" data-job-id="${escapeHtml(job.job_id || '')}">
+
         <div class="job-card-title">
+
           <span class="job-card-title-link" onclick="openJobDetail(${cacheIdx})">${escapeHtml(job.job_title || 'Untitled')}</span>${seenBadge}
+
         </div>
+
         <div class="job-card-company">
+
           <i class="fas fa-building me-1" style="color:var(--muted);"></i>${escapeHtml(job.employer_name || 'Unknown Company')}
+
           ${location ? `<span class="ms-2"><i class="fas fa-map-marker-alt me-1"></i>${escapeHtml(location)}</span>` : ''}
+
         </div>
+
         <div class="job-card-meta">
+
           ${postedText ? `<span><i class="far fa-clock me-1"></i>${escapeHtml(postedText)}</span>` : ''}
+
           ${salaryBadge}
+
           ${buildSourceBadge(job.job_publisher)}
+
         </div>
+
         ${(flagBadges || signalBadges) ? `<div class="job-card-badges">${flagBadges}${signalBadges}</div>` : ''}
+
         ${desc ? `<div class="job-card-desc">${escapeHtml(desc)}${job.job_description && job.job_description.length > 200 ? '...' : ''}</div>` : ''}
+
         <div class="job-card-actions">
+
           <button class="btn btn-sm btn-dismiss" onclick="dismissJob('${escapeHtml(job.job_id || '')}', this.closest('.job-card'))" title="Not interested">
+
             <i class="fas fa-thumbs-down"></i>
+
           </button>
+
           <button class="btn btn-sm btn-outline-custom" onclick="saveJobByIdx(${cacheIdx}, this)">
+
             <i class="fas fa-bookmark me-1"></i>Save Job
+
           </button>
+
           <button class="btn btn-sm btn-primary-custom" onclick="tailorByIdx(${cacheIdx})">
+
             <i class="fas fa-magic me-1"></i>Tailor Resume →
+
           </button>
+
         </div>
+
       </div>`;
+
   }
 
+
+
   // ============================================================
+
   //  JOB DETAIL MODAL
+
   // ============================================================
+
   let MODAL_CURRENT_JOB_IDX = null;
 
+  let MODAL_CURRENT_SAVED_JOB_ID = null; // tracks which saved job the modal is showing
+
+  let MODAL_ANALYSIS_CACHE = {}; // { job_id: { aiText, matchText, deepText, timestamp } }
+
+
+
   function openJobDetail(cacheIdx) {
+
     const job = SEARCH_RESULTS_CACHE[cacheIdx];
+
     if (!job) return;
+
     MODAL_CURRENT_JOB_IDX = cacheIdx;
+
+    MODAL_CURRENT_SAVED_JOB_ID = null; // not opened from saved jobs
+
     markJobSeen(job.job_id);
+
+    // Reset save button — not yet saved when opening from search results
+    const saveBtn = document.getElementById('modalSaveBtn');
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = '<i class="fas fa-bookmark me-1"></i>Save Job';
+      saveBtn.style.opacity = '1';
+      saveBtn.style.background = '';
+      saveBtn.style.color = '';
+      saveBtn.style.border = '';
+    }
 
     // Title & meta
     document.getElementById('modalJobTitle').textContent = job.job_title || 'Untitled';
+
     const location = [job.job_city, job.job_state, job.job_country].filter(Boolean).join(', ');
+
     document.getElementById('modalJobMeta').textContent =
+
       [job.employer_name, location].filter(Boolean).join(' · ');
 
+
+
     // Quick info bar
+
     const { flags, signals } = scoreJob(job);
+
     const salary = formatSalary(job);
+
     const posted = formatPostedDate(job);
+
     const quickParts = [];
+
     if (salary) quickParts.push(`<span class="job-card-salary"><i class="fas fa-dollar-sign me-1"></i>${escapeHtml(salary)}</span>`);
+
     if (posted) quickParts.push(`<span style="font-size:12px;color:var(--muted);"><i class="far fa-clock me-1"></i>${escapeHtml(posted)}</span>`);
+
     const srcBadge = buildSourceBadge(job.job_publisher);
+
     if (srcBadge) quickParts.push(srcBadge);
+
     flags.forEach(f => quickParts.push(`<span class="flag-badge"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(f)}</span>`));
+
     signals.forEach(s => {
+
       const extra = s === 'Fresh posting' ? ' fresh-badge' : '';
+
       quickParts.push(`<span class="signal-badge${extra}"><i class="fas fa-check me-1"></i>${escapeHtml(s)}</span>`);
+
     });
+
     document.getElementById('modalQuickInfo').innerHTML = quickParts.join('');
 
+
+
     // Apply link
+
     const applyLink = job.job_apply_link || '#';
+
     document.getElementById('modalApplyBtn').href = applyLink;
+
     document.getElementById('modalApplyBtn').style.display = applyLink !== '#' ? 'inline-flex' : 'none';
 
+
+
     // Full JD
+
     document.getElementById('modalJobDescription').textContent = job.job_description || 'No description available.';
 
+
+
     // Gemini job analysis — legitimacy + company + apply/skip + keywords
+
     const geminiSection = document.getElementById('modalGeminiSection');
+
     geminiSection.style.display = 'block';
+
     document.getElementById('modalGeminiOutput').innerHTML = '';
+
     document.getElementById('modalGeminiSpinner').style.display = 'inline-block';
-    runModalGeminiAnalysis(job);
+
+    runAndCacheGeminiAnalysis(job, document.getElementById('modalGeminiOutput'), document.getElementById('modalGeminiSpinner'));
+
+
 
     // Gemini match score — how well Angelo fits this specific role
+
     const matchSection = document.getElementById('modalMatchSection');
+
     matchSection.style.display = 'block';
+
     document.getElementById('modalMatchOutput').innerHTML = '';
+
     document.getElementById('modalMatchSpinner').style.display = 'inline-block';
-    setTimeout(() => runModalMatchScore(job), 300);
 
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
-    modal.show();
-  }
+    setTimeout(() => runAndCacheMatchScore(job, document.getElementById('modalMatchOutput'), document.getElementById('modalMatchSpinner')), 300);
 
-  async function runModalGeminiAnalysis(job) {
-    const outputEl = document.getElementById('modalGeminiOutput');
-    const spinner = document.getElementById('modalGeminiSpinner');
 
-    const geminiKeyForRequest = getNextGeminiKey();
-    if (!geminiKeyForRequest) {
-      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings to enable AI analysis.</span>';
-      spinner.style.display = 'none';
-      return;
+
+    // Deep Analysis section — reset for search result (Rob adds the HTML elements)
+
+    const deepSection = document.getElementById('modalDeepSection');
+
+    if (deepSection) {
+
+      deepSection.style.display = 'block';
+
+      const deepOutput = document.getElementById('modalDeepOutput');
+
+      const deepSpinner = document.getElementById('modalDeepSpinner');
+
+      const deepBtn = document.getElementById('modalDeepAnalysisBtn');
+
+      if (deepOutput) deepOutput.innerHTML = '';
+
+      if (deepSpinner) deepSpinner.style.display = 'none';
+
+      if (deepBtn) deepBtn.style.display = 'inline-block';
+
     }
 
+
+
+    // Show modal
+
+    const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
+
+    modal.show();
+
+  }
+
+
+  async function runModalGeminiAnalysis(job) {
+
+    const outputEl = document.getElementById('modalGeminiOutput');
+
+    const spinner = document.getElementById('modalGeminiSpinner');
+
+
+
+    const geminiKeyForRequest = getNextGeminiKey();
+
+    if (!geminiKeyForRequest) {
+
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings to enable AI analysis.</span>';
+
+      spinner.style.display = 'none';
+
+      return;
+
+    }
+
+
+
     const fullJD = (job.job_description || '').substring(0, 4000);
+
     const salary = formatSalary(job);
+
+    const posted = formatPostedDate(job);
+
+
+
+    const prompt = `Job search analyst. Brutally honest. No filler.
+
+
+
+CANDIDATE: Operations Lead & self-taught Full-Stack Developer, 5+ yrs Fabletics. Built CRM managing 44K+ orders, eliminated 3K+ hrs/year manual work. Target: PM / Ops Manager / Marketing Ops / Technical PM. San Diego CA (hybrid/remote ok). Salary target $70K+.
+
+
+
+POSTING:
+
+Title: ${job.job_title || 'N/A'}
+
+Company: ${job.employer_name || 'N/A'}
+
+Location: ${[job.job_city, job.job_state].filter(Boolean).join(', ') || 'N/A'}
+
+Salary: ${salary || 'NOT LISTED'}
+
+Posted: ${posted || 'unknown'}
+
+Direct apply: ${job.job_apply_is_direct ? 'YES' : 'NO'}
+
+
+
+JOB DESCRIPTION:
+
+${fullJD}
+
+
+
+---
+
+Respond in EXACTLY this format. Complete every section fully. Do not truncate.
+
+
+
+LEGITIMACY SCORE: [X/10]
+
+[1-2 sentences: why this score. Ghost job/agency/vague = low. Real company + salary + specific role = high.]
+
+
+
+🏢 COMPANY
+
+[2-3 sentences: what this company does, industry, size/stage. If recruiter/agency posting, name that clearly.]
+
+
+
+✅ APPLY IF
+
+• [reason 1 specific to this JD and candidate profile]
+
+• [reason 2]
+
+• [reason 3]
+
+
+
+⚠️ SKIP IF
+
+• [red flag 1 from this specific JD]
+
+• [red flag 2]
+
+• [red flag 3]
+
+
+
+🎯 KEYWORDS TO USE
+
+[5-7 exact phrases from this JD, comma-separated, for resume tailoring]`;
+
+
+
+    try {
+
+      const response = await fetch(
+
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKeyForRequest}`,
+
+        {
+
+          method: 'POST',
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify({
+
+            contents: [{ parts: [{ text: prompt }] }],
+
+            generationConfig: { temperature: 0.3, maxOutputTokens: 3000 }
+
+          })
+
+        }
+
+      );
+
+      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+
+      const data = await response.json();
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!text) throw new Error('No output');
+
+
+
+      // Extract score BEFORE escaping (work on raw text)
+
+      const scoreMatch = text.match(/LEGITIMACY SCORE:\s*(\d+)/i);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+
+      const scoreColor = score === null ? '#6c757d' :
+
+                         score >= 7 ? '#198754' :
+
+                         score >= 4 ? '#fd7e14' : '#dc3545';
+
+      const scoreLabel = score === null ? '' :
+
+                         score >= 7 ? '✓ Worth applying' :
+
+                         score >= 4 ? '⚠ Proceed with caution' : '✗ Likely not worth it';
+
+
+
+      // Helper: escape HTML safely
+
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+
+
+      // Section header keywords to match
+
+      const HEADERS = ['🏢 COMPANY', '✅ APPLY IF', '⚠️ SKIP IF', '🎯 KEYWORDS TO USE'];
+
+
+
+      // Build HTML line by line — guarantees every tag is opened AND closed
+
+      const lines = text.split('\n');
+
+      const parts = [];
+
+
+
+      // Score badge first
+
+      if (score !== null) {
+
+        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+
+          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+
+          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+
+        </div>`);
+
+      }
+
+
+
+      for (const line of lines) {
+
+        const trimmed = line.trim();
+
+        if (!trimmed) continue;
+
+
+
+        // Skip the raw LEGITIMACY SCORE line (already rendered as badge)
+
+        if (/^LEGITIMACY SCORE:/i.test(trimmed)) {
+
+          // Render the explanation sentence that follows on the same line
+
+          const explanation = trimmed.replace(/^LEGITIMACY SCORE:\s*\d+\/10\s*/i, '').trim();
+
+          if (explanation) {
+
+            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+
+          }
+
+          continue;
+
+        }
+
+
+
+        // Section headers
+
+        if (HEADERS.some(h => trimmed.startsWith(h))) {
+
+          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+
+            <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed)}</strong>
+
+          </div>`);
+
+          continue;
+
+        }
+
+
+
+        // Bullet points (•, -, *, or numbered)
+
+        if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+
+          const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+
+          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+
+            <span style="color:var(--primary);font-weight:700;flex-shrink:0;">•</span>
+
+            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+
+          </div>`);
+
+          continue;
+
+        }
+
+
+
+        // Regular paragraph text
+
+        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+
+      }
+
+
+
+      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+
+    } catch(e) {
+
+      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
+
+    } finally {
+
+      spinner.style.display = 'none';
+
+    }
+
+  }
+
+
+
+  async function runModalMatchScore(job) {
+
+    const outputEl = document.getElementById('modalMatchOutput');
+
+    const spinner = document.getElementById('modalMatchSpinner');
+
+
+
+    const geminiKey = getNextGeminiKey();
+
+    if (!geminiKey) {
+
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings to enable match scoring.</span>';
+
+      spinner.style.display = 'none';
+
+      return;
+
+    }
+
+
+
+    if (!RESUME_CONTENT) {
+
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add your resume in the Resume tab to enable match scoring.</span>';
+
+      spinner.style.display = 'none';
+
+      return;
+
+    }
+
+
+
+    const fullJD = (job.job_description || '').substring(0, 3000);
+
+
+
+    const prompt = `You are a career coach scoring how well a candidate matches a specific job posting. Be direct and honest — do not inflate the score.
+
+
+
+CANDIDATE RESUME:
+
+${RESUME_CONTENT}
+
+
+
+JOB POSTING:
+
+Title: ${job.job_title || 'N/A'}
+
+Company: ${job.employer_name || 'N/A'}
+
+Description:
+
+${fullJD}
+
+
+
+---
+
+Score how well this candidate matches this role. Respond in EXACTLY this format. Complete every section. Do not truncate.
+
+
+
+MATCH SCORE: [X/10]
+
+[1 sentence: overall verdict. Be honest — if it's a stretch, say so.]
+
+
+
+✅ STRONG FIT
+
+• [specific experience or skill from resume that directly matches a requirement in this JD]
+
+• [second strong match]
+
+• [third strong match]
+
+
+
+⚠️ GAPS TO ADDRESS
+
+• [requirement in the JD that is missing or weak in the resume]
+
+• [second gap]
+
+• [third gap — if no real gaps, say "No significant gaps identified"]
+
+
+
+💡 HOW TO POSITION
+
+[2-3 sentences: concrete advice on how to frame the resume/cover letter for THIS specific role. What to lead with, what to downplay, what angle to take.]`;
+
+
+
+    try {
+
+      const response = await fetch(
+
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+
+        {
+
+          method: 'POST',
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify({
+
+            contents: [{ parts: [{ text: prompt }] }],
+
+            generationConfig: { temperature: 0.3, maxOutputTokens: 3000, thinkingConfig: { thinkingBudget: 0 } }
+
+          })
+
+        }
+
+      );
+
+      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+
+      const data = await response.json();
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      const finishReason = data.candidates?.[0]?.finishReason || '';
+
+      if (!text) throw new Error('No output');
+
+
+
+      // Extract match score for color coding
+
+      const scoreMatch = text.match(/MATCH SCORE[^0-9]*(\d+)/i);
+
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+
+      const scoreColor = score === null ? '#6c757d' :
+
+                         score >= 7 ? '#198754' :
+
+                         score >= 5 ? '#fd7e14' : '#dc3545';
+
+      const scoreLabel = score === null ? '' :
+
+                         score >= 7 ? '✓ Strong match' :
+
+                         score >= 5 ? '~ Moderate match' : '✗ Significant gaps';
+
+
+
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      const MATCH_HEADERS = ['✅ STRONG FIT', '⚠️ GAPS TO ADDRESS', '💡 HOW TO POSITION'];
+
+      const lines = text.split('\n');
+
+      const parts = [];
+
+
+
+      // Score badge
+
+      if (score !== null) {
+
+        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+
+          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+
+          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+
+        </div>`);
+
+      }
+
+
+
+      for (const line of lines) {
+
+        const trimmed = line.trim();
+
+        if (!trimmed) continue;
+
+        // Strip markdown bold markers for reliable matching (Gemini often wraps headers/labels in **)
+
+        const cleaned = trimmed.replace(/^\*+/, '').replace(/\*+$/, '').trim();
+
+
+
+        if (/^MATCH SCORE:/i.test(cleaned)) {
+
+          const explanation = cleaned.replace(/^MATCH SCORE:\s*\d+\/10\s*/i, '').trim();
+
+          if (explanation) {
+
+            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+
+          }
+
+          continue;
+
+        }
+
+
+
+        if (MATCH_HEADERS.some(h => cleaned.startsWith(h))) {
+
+          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+
+            <strong style="font-size:13px;color:#1a1a2e;">${esc(cleaned)}</strong>
+
+          </div>`);
+
+          continue;
+
+        }
+
+
+
+        if (/^[•\-\*]/.test(cleaned) || /^\d+\./.test(cleaned)) {
+
+          const content = cleaned.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+
+          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+
+            <span style="color:#0dcaf0;font-weight:700;flex-shrink:0;">•</span>
+
+            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+
+          </div>`);
+
+          continue;
+
+        }
+
+
+
+        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(cleaned)}</p>`);
+
+      }
+
+
+
+      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+
+      if (finishReason === 'MAX_TOKENS') {
+
+        outputEl.innerHTML += '<p style="margin:8px 0 0 0;font-size:11px;color:var(--muted);font-style:italic;">⚠ Response was cut short — try again for full analysis.</p>';
+
+      }
+
+      // Scroll My Match into view smoothly so user sees the result
+
+      setTimeout(() => outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+
+    } catch(e) {
+
+      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">Match scoring unavailable — ${escapeHtml(e.message)}</span>`;
+
+    } finally {
+
+      spinner.style.display = 'none';
+
+    }
+
+  }
+
+
+
+  // ============================================================
+
+  //  GEMINI RAW TEXT FETCHERS (no DOM side-effects — return text only)
+
+  // ============================================================
+
+  async function runModalGeminiAnalysisRaw(job) {
+
+    const geminiKeyForRequest = getNextGeminiKey();
+
+    if (!geminiKeyForRequest) return null;
+
+    const fullJD = (job.job_description || '').substring(0, 4000);
+
+    const salary = formatSalary(job);
+
     const posted = formatPostedDate(job);
 
     const prompt = `Job search analyst. Brutally honest. No filler.
 
+
+
 CANDIDATE: Operations Lead & self-taught Full-Stack Developer, 5+ yrs Fabletics. Built CRM managing 44K+ orders, eliminated 3K+ hrs/year manual work. Target: PM / Ops Manager / Marketing Ops / Technical PM. San Diego CA (hybrid/remote ok). Salary target $70K+.
 
+
+
 POSTING:
+
 Title: ${job.job_title || 'N/A'}
+
 Company: ${job.employer_name || 'N/A'}
+
 Location: ${[job.job_city, job.job_state].filter(Boolean).join(', ') || 'N/A'}
+
 Salary: ${salary || 'NOT LISTED'}
+
 Posted: ${posted || 'unknown'}
+
 Direct apply: ${job.job_apply_is_direct ? 'YES' : 'NO'}
 
+
+
 JOB DESCRIPTION:
+
 ${fullJD}
 
+
+
 ---
+
 Respond in EXACTLY this format. Complete every section fully. Do not truncate.
 
+
+
 LEGITIMACY SCORE: [X/10]
+
 [1-2 sentences: why this score. Ghost job/agency/vague = low. Real company + salary + specific role = high.]
 
+
+
 🏢 COMPANY
+
 [2-3 sentences: what this company does, industry, size/stage. If recruiter/agency posting, name that clearly.]
 
+
+
 ✅ APPLY IF
+
 • [reason 1 specific to this JD and candidate profile]
+
 • [reason 2]
+
 • [reason 3]
 
+
+
 ⚠️ SKIP IF
+
 • [red flag 1 from this specific JD]
+
 • [red flag 2]
+
 • [red flag 3]
 
+
+
 🎯 KEYWORDS TO USE
+
 [5-7 exact phrases from this JD, comma-separated, for resume tailoring]`;
 
     try {
+
       const response = await fetch(
+
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKeyForRequest}`,
+
         {
+
           method: 'POST',
+
           headers: { 'Content-Type': 'application/json' },
+
           body: JSON.stringify({
+
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+
+            generationConfig: { temperature: 0.3, maxOutputTokens: 3000 }
+
           })
+
         }
+
       );
-      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+
+      if (!response.ok) return null;
+
       const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) throw new Error('No output');
 
-      // Extract score BEFORE escaping (work on raw text)
-      const scoreMatch = text.match(/LEGITIMACY SCORE:\s*(\d+)/i);
-      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
-      const scoreColor = score === null ? '#6c757d' :
-                         score >= 7 ? '#198754' :
-                         score >= 4 ? '#fd7e14' : '#dc3545';
-      const scoreLabel = score === null ? '' :
-                         score >= 7 ? '✓ Worth applying' :
-                         score >= 4 ? '⚠ Proceed with caution' : '✗ Likely not worth it';
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
 
-      // Helper: escape HTML safely
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    } catch(e) { return null; }
 
-      // Section header keywords to match
-      const HEADERS = ['🏢 COMPANY', '✅ APPLY IF', '⚠️ SKIP IF', '🎯 KEYWORDS TO USE'];
-
-      // Build HTML line by line — guarantees every tag is opened AND closed
-      const lines = text.split('\n');
-      const parts = [];
-
-      // Score badge first
-      if (score !== null) {
-        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
-          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
-          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
-        </div>`);
-      }
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-
-        // Skip the raw LEGITIMACY SCORE line (already rendered as badge)
-        if (/^LEGITIMACY SCORE:/i.test(trimmed)) {
-          // Render the explanation sentence that follows on the same line
-          const explanation = trimmed.replace(/^LEGITIMACY SCORE:\s*\d+\/10\s*/i, '').trim();
-          if (explanation) {
-            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
-          }
-          continue;
-        }
-
-        // Section headers
-        if (HEADERS.some(h => trimmed.startsWith(h))) {
-          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
-            <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed)}</strong>
-          </div>`);
-          continue;
-        }
-
-        // Bullet points (•, -, *, or numbered)
-        if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
-          const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
-          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
-            <span style="color:var(--primary);font-weight:700;flex-shrink:0;">•</span>
-            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
-          </div>`);
-          continue;
-        }
-
-        // Regular paragraph text
-        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
-      }
-
-      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
-    } catch(e) {
-      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">AI analysis unavailable — ${escapeHtml(e.message)}</span>`;
-    } finally {
-      spinner.style.display = 'none';
-    }
   }
 
-  async function runModalMatchScore(job) {
-    const outputEl = document.getElementById('modalMatchOutput');
-    const spinner = document.getElementById('modalMatchSpinner');
+
+
+  async function runModalMatchScoreRaw(job) {
 
     const geminiKey = getNextGeminiKey();
-    if (!geminiKey) {
-      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings to enable match scoring.</span>';
-      spinner.style.display = 'none';
-      return;
-    }
 
-    if (!RESUME_CONTENT) {
-      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add your resume in the Resume tab to enable match scoring.</span>';
-      spinner.style.display = 'none';
-      return;
-    }
+    if (!geminiKey || !RESUME_CONTENT) return null;
 
     const fullJD = (job.job_description || '').substring(0, 3000);
 
     const prompt = `You are a career coach scoring how well a candidate matches a specific job posting. Be direct and honest — do not inflate the score.
 
+
+
 CANDIDATE RESUME:
+
 ${RESUME_CONTENT}
 
+
+
 JOB POSTING:
+
 Title: ${job.job_title || 'N/A'}
+
 Company: ${job.employer_name || 'N/A'}
+
 Description:
+
 ${fullJD}
 
+
+
 ---
+
 Score how well this candidate matches this role. Respond in EXACTLY this format. Complete every section. Do not truncate.
 
+
+
 MATCH SCORE: [X/10]
+
 [1 sentence: overall verdict. Be honest — if it's a stretch, say so.]
 
+
+
 ✅ STRONG FIT
+
 • [specific experience or skill from resume that directly matches a requirement in this JD]
+
 • [second strong match]
+
 • [third strong match]
 
+
+
 ⚠️ GAPS TO ADDRESS
+
 • [requirement in the JD that is missing or weak in the resume]
+
 • [second gap]
+
 • [third gap — if no real gaps, say "No significant gaps identified"]
 
+
+
 💡 HOW TO POSITION
+
 [2-3 sentences: concrete advice on how to frame the resume/cover letter for THIS specific role. What to lead with, what to downplay, what angle to take.]`;
 
     try {
+
       const response = await fetch(
+
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+
         {
+
           method: 'POST',
+
           headers: { 'Content-Type': 'application/json' },
+
           body: JSON.stringify({
+
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } }
+
+            generationConfig: { temperature: 0.3, maxOutputTokens: 3000, thinkingConfig: { thinkingBudget: 0 } }
+
           })
+
         }
+
       );
-      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+
+      if (!response.ok) return null;
+
       const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const finishReason = data.candidates?.[0]?.finishReason || '';
-      if (!text) throw new Error('No output');
 
-      // Extract match score for color coding
-      const scoreMatch = text.match(/MATCH SCORE[^0-9]*(\d+)/i);
-      const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
-      const scoreColor = score === null ? '#6c757d' :
-                         score >= 7 ? '#198754' :
-                         score >= 5 ? '#fd7e14' : '#dc3545';
-      const scoreLabel = score === null ? '' :
-                         score >= 7 ? '✓ Strong match' :
-                         score >= 5 ? '~ Moderate match' : '✗ Significant gaps';
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
 
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const MATCH_HEADERS = ['✅ STRONG FIT', '⚠️ GAPS TO ADDRESS', '💡 HOW TO POSITION'];
-      const lines = text.split('\n');
-      const parts = [];
+    } catch(e) { return null; }
 
-      // Score badge
-      if (score !== null) {
-        parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
-          <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
-          <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+  }
+
+
+
+  // ============================================================
+
+  //  GEMINI RENDER-ONLY FUNCTIONS (take raw text, render to DOM)
+
+  // ============================================================
+
+  function renderGeminiAnalysisText(text, outputEl) {
+
+    if (!outputEl) return;
+
+    const scoreMatch = text.match(/LEGITIMACY SCORE:\s*(\d+)/i);
+
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+
+    const scoreColor = score === null ? '#6c757d' :
+
+                       score >= 7 ? '#198754' :
+
+                       score >= 4 ? '#fd7e14' : '#dc3545';
+
+    const scoreLabel = score === null ? '' :
+
+                       score >= 7 ? '✓ Worth applying' :
+
+                       score >= 4 ? '⚠ Proceed with caution' : '✗ Likely not worth it';
+
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const HEADERS = ['🏢 COMPANY', '✅ APPLY IF', '⚠️ SKIP IF', '🎯 KEYWORDS TO USE'];
+
+    const lines = text.split('\n');
+
+    const parts = [];
+
+    if (score !== null) {
+
+      parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+
+        <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+
+        <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+
+      </div>`);
+
+    }
+
+    for (const line of lines) {
+
+      const trimmed = line.trim();
+
+      if (!trimmed) continue;
+
+      if (/^LEGITIMACY SCORE:/i.test(trimmed)) {
+
+        const explanation = trimmed.replace(/^LEGITIMACY SCORE:\s*\d+\/10\s*/i, '').trim();
+
+        if (explanation) {
+
+          parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+
+        }
+
+        continue;
+
+      }
+
+      if (HEADERS.some(h => trimmed.startsWith(h))) {
+
+        parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+
+          <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed)}</strong>
+
         </div>`);
+
+        continue;
+
       }
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        // Strip markdown bold markers for reliable matching (Gemini often wraps headers/labels in **)
-        const cleaned = trimmed.replace(/^\*+/, '').replace(/\*+$/, '').trim();
+      if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
 
-        if (/^MATCH SCORE:/i.test(cleaned)) {
-          const explanation = cleaned.replace(/^MATCH SCORE:\s*\d+\/10\s*/i, '').trim();
-          if (explanation) {
-            parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
-          }
-          continue;
-        }
+        const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
 
-        if (MATCH_HEADERS.some(h => cleaned.startsWith(h))) {
-          parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
-            <strong style="font-size:13px;color:#1a1a2e;">${esc(cleaned)}</strong>
-          </div>`);
-          continue;
-        }
+        parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
 
-        if (/^[•\-\*]/.test(cleaned) || /^\d+\./.test(cleaned)) {
-          const content = cleaned.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
-          parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
-            <span style="color:#0dcaf0;font-weight:700;flex-shrink:0;">•</span>
-            <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
-          </div>`);
-          continue;
-        }
+          <span style="color:var(--primary);font-weight:700;flex-shrink:0;">•</span>
 
-        parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(cleaned)}</p>`);
+          <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+
+        </div>`);
+
+        continue;
+
       }
 
-      outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
-      if (finishReason === 'MAX_TOKENS') {
-        outputEl.innerHTML += '<p style="margin:8px 0 0 0;font-size:11px;color:var(--muted);font-style:italic;">⚠ Response was cut short — try again for full analysis.</p>';
-      }
-      // Scroll My Match into view smoothly so user sees the result
-      setTimeout(() => outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-    } catch(e) {
-      outputEl.innerHTML = `<span style="color:var(--muted);font-size:12px;">Match scoring unavailable — ${escapeHtml(e.message)}</span>`;
-    } finally {
-      spinner.style.display = 'none';
+      parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+
     }
+
+    outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+
   }
 
-  function modalSaveJob() {
-    if (MODAL_CURRENT_JOB_IDX === null) return;
-    const job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+
+
+  function renderMatchScoreText(text, outputEl) {
+
+    if (!outputEl) return;
+
+    const scoreMatch = text.match(/MATCH SCORE[^0-9]*(\d+)/i);
+
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : null;
+
+    const scoreColor = score === null ? '#6c757d' :
+
+                       score >= 7 ? '#198754' :
+
+                       score >= 5 ? '#fd7e14' : '#dc3545';
+
+    const scoreLabel = score === null ? '' :
+
+                       score >= 7 ? '✓ Strong match' :
+
+                       score >= 5 ? '~ Moderate match' : '✗ Significant gaps';
+
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const MATCH_HEADERS = ['✅ STRONG FIT', '⚠️ GAPS TO ADDRESS', '💡 HOW TO POSITION'];
+
+    const lines = text.split('\n');
+
+    const parts = [];
+
+    if (score !== null) {
+
+      parts.push(`<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid ${scoreColor}20;">
+
+        <span style="font-size:28px;font-weight:900;color:${scoreColor};line-height:1;">${score}/10</span>
+
+        <span style="font-size:13px;font-weight:700;color:${scoreColor};">${scoreLabel}</span>
+
+      </div>`);
+
+    }
+
+    for (const line of lines) {
+
+      const trimmed = line.trim();
+
+      if (!trimmed) continue;
+
+      const cleaned = trimmed.replace(/^\*+/, '').replace(/\*+$/, '').trim();
+
+      if (/^MATCH SCORE:/i.test(cleaned)) {
+
+        const explanation = cleaned.replace(/^MATCH SCORE:\s*\d+\/10\s*/i, '').trim();
+
+        if (explanation) {
+
+          parts.push(`<p style="margin:0 0 12px 0;font-size:13px;color:#495057;font-style:italic;">${esc(explanation)}</p>`);
+
+        }
+
+        continue;
+
+      }
+
+      if (MATCH_HEADERS.some(h => cleaned.startsWith(h))) {
+
+        parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+
+          <strong style="font-size:13px;color:#1a1a2e;">${esc(cleaned)}</strong>
+
+        </div>`);
+
+        continue;
+
+      }
+
+      if (/^[•\-\*]/.test(cleaned) || /^\d+\./.test(cleaned)) {
+
+        const content = cleaned.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+
+        parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+
+          <span style="color:#0dcaf0;font-weight:700;flex-shrink:0;">•</span>
+
+          <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+
+        </div>`);
+
+        continue;
+
+      }
+
+      parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(cleaned)}</p>`);
+
+    }
+
+    outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+
+    // Scroll match into view (preserves original behavior)
+
+    setTimeout(() => outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+
+  }
+
+
+
+  // ============================================================
+
+  //  CACHING WRAPPERS — call raw, cache, then render
+
+  // ============================================================
+
+  async function runAndCacheGeminiAnalysis(job, outputEl, spinnerEl) {
+
+    spinnerEl.style.display = 'inline-block';
+
+    outputEl.innerHTML = '';
+
+    const text = await runModalGeminiAnalysisRaw(job);
+
+    if (text) {
+
+      // Cache it
+
+      MODAL_ANALYSIS_CACHE[job.job_id] = MODAL_ANALYSIS_CACHE[job.job_id] || {};
+
+      MODAL_ANALYSIS_CACHE[job.job_id].aiText = text;
+
+      MODAL_ANALYSIS_CACHE[job.job_id].timestamp = new Date().toISOString();
+
+      renderGeminiAnalysisText(text, outputEl);
+
+    } else {
+
+      outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">AI analysis unavailable</span>';
+
+    }
+
+    spinnerEl.style.display = 'none';
+
+  }
+
+
+
+  async function runAndCacheMatchScore(job, outputEl, spinnerEl) {
+
+    spinnerEl.style.display = 'inline-block';
+
+    outputEl.innerHTML = '';
+
+    const text = await runModalMatchScoreRaw(job);
+
+    if (text) {
+
+      MODAL_ANALYSIS_CACHE[job.job_id] = MODAL_ANALYSIS_CACHE[job.job_id] || {};
+
+      MODAL_ANALYSIS_CACHE[job.job_id].matchText = text;
+
+      MODAL_ANALYSIS_CACHE[job.job_id].timestamp = MODAL_ANALYSIS_CACHE[job.job_id].timestamp || new Date().toISOString();
+
+      renderMatchScoreText(text, outputEl);
+
+    } else {
+
+      if (!RESUME_CONTENT) {
+
+        outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add your resume in the Resume tab to enable match scoring.</span>';
+
+      } else {
+
+        outputEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Match scoring unavailable</span>';
+
+      }
+
+    }
+
+    spinnerEl.style.display = 'none';
+
+  }
+
+
+
+  // ============================================================
+
+  //  SAVED JOB DETAIL MODAL
+
+  // ============================================================
+
+  function openSavedJobDetail(jobId) {
+
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+
     if (!job) return;
-    const btn = document.getElementById('modalSaveBtn');
-    saveJob(job, btn);
-  }
 
-  function modalTailor() {
-    if (MODAL_CURRENT_JOB_IDX === null) return;
-    // Close modal first, then go to tailor tab
-    const modalEl = document.getElementById('jobDetailModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-    tailorByIdx(MODAL_CURRENT_JOB_IDX);
-  }
 
-  function toggleJD() {
-    const jd = document.getElementById('modalJobDescription');
-    const icon = document.getElementById('toggleJDIcon');
-    if (!jd) return;
-    const isHidden = jd.style.display === 'none';
-    jd.style.display = isHidden ? 'block' : 'none';
-    icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
-  }
 
-  // ============================================================
-  //  JOB SCORING
-  // ============================================================
-  function scoreJob(job) {
-    const flags = [];
-    const signals = [];
-    const now = Date.now();
-    const postedDate = job.job_posted_at_timestamp ? job.job_posted_at_timestamp * 1000 : null;
-    const daysSincePosted = postedDate
-      ? Math.floor((now - postedDate) / (1000 * 60 * 60 * 24))
-      : null;
+    // Populate modal header — same fields as openJobDetail()
 
-    // Red flags
-    if (!job.job_min_salary && !job.job_max_salary && !job.job_salary_currency)
-      flags.push('No salary posted');
-    if (daysSincePosted !== null && daysSincePosted > 14)
-      flags.push(`Posted ${daysSincePosted}d ago`);
-    const agencyKeywords = ['staffing', 'recruiting', 'talent solutions', 'confidential', 'search firm'];
-    if (agencyKeywords.some(k => (job.employer_name || '').toLowerCase().includes(k)))
-      flags.push('Staffing/agency');
-    const badWords = ['rockstar', 'ninja', 'wizard', 'wear many hats', 'wear all hats'];
-    if (badWords.some(k => (job.job_description || '').toLowerCase().includes(k)))
-      flags.push('Vague/problematic JD');
+    document.getElementById('modalJobTitle').textContent = job.title || 'Untitled';
 
-    // Green signals
-    const minSalary = job.job_min_salary || 0;
-    const maxSalary = job.job_max_salary || 0;
-    const salaryPeriod = job.job_salary_period || '';
-    const annualSalary = salaryPeriod === 'HOUR' ? minSalary * 2080 :
-                         salaryPeriod === 'MONTH' ? minSalary * 12 : minSalary;
-    if (annualSalary >= 65000 || maxSalary >= 65000)
-      signals.push('Salary $65k+');
-    if (daysSincePosted !== null && daysSincePosted <= 3)
-      signals.push('Fresh posting');
-    if (job.job_apply_is_direct === true)
-      signals.push('Direct apply');
-    if ((job.job_employment_type || '').includes('FULLTIME'))
-      signals.push('Full-time confirmed');
+    document.getElementById('modalJobMeta').textContent =
 
-    return { flags, signals };
-  }
+      [job.company, job.location].filter(Boolean).join(' · ');
 
-  // ============================================================
-  //  SAVE JOB
-  // ============================================================
-  function saveJobByIdx(cacheIdx, btn) {
-    const job = SEARCH_RESULTS_CACHE[cacheIdx];
-    if (!job) { showToast('Job data not found', 'danger'); return; }
-    saveJob(job, btn);
-  }
 
-  function tailorByIdx(cacheIdx) {
-    const job = SEARCH_RESULTS_CACHE[cacheIdx];
-    if (!job) { showToast('Job data not found', 'danger'); return; }
-    CURRENT_TAILOR_JOB_ID = null;
-    document.getElementById('tailorJobTitle').value = job.job_title || '';
-    document.getElementById('tailorCompany').value = job.employer_name || '';
-    document.getElementById('tailorJD').value = job.job_description || '';
-    clearTailorOutput();
-    showTab('tailor');
-  }
 
-  function saveJob(job, btn) {
-    // Check for duplicate
-    if (SAVED_JOBS.some(j => j.id === job.job_id || j.jobId === job.job_id)) {
-      showToast('Already saved!', 'warning');
-      return;
+    // Quick info bar — flags + signals + salary
+
+    const quickParts = [];
+
+    if (job.salary) quickParts.push(`<span class="job-card-salary"><i class="fas fa-dollar-sign me-1"></i>${escapeHtml(job.salary)}</span>`);
+
+    (job.flags || []).forEach(f => quickParts.push(`<span class="flag-badge"><i class="fas fa-exclamation-triangle me-1"></i>${escapeHtml(f)}</span>`));
+
+    (job.signals || []).forEach(s => {
+
+      const extra = s === 'Fresh posting' ? ' fresh-badge' : '';
+
+      quickParts.push(`<span class="signal-badge${extra}"><i class="fas fa-check me-1"></i>${escapeHtml(s)}</span>`);
+
+    });
+
+    document.getElementById('modalQuickInfo').innerHTML = quickParts.join('');
+
+
+
+    // Apply link
+
+    const applyLink = job.applyLink || '#';
+
+    const applyBtn = document.getElementById('modalApplyBtn');
+
+    applyBtn.href = applyLink;
+
+    applyBtn.style.display = applyLink !== '#' ? 'inline-flex' : 'none';
+
+
+
+    // Full JD
+
+    document.getElementById('modalJobDescription').textContent = job.description || 'No description available.';
+
+
+
+    // Save button — already saved, show disabled state
+
+    const saveBtn = document.getElementById('modalSaveBtn');
+
+    if (saveBtn) {
+
+      saveBtn.disabled = true;
+
+      saveBtn.innerHTML = '<i class="fas fa-check me-1"></i>Saved';
+
+      saveBtn.style.opacity = '0.6';
+
     }
 
-    const { flags, signals } = scoreJob(job);
-    const location = [job.job_city, job.job_state].filter(Boolean).join(', ');
 
-    const savedJob = {
-      id: job.job_id + '_' + Date.now(),
-      jobId: job.job_id,
-      title: job.job_title || 'Untitled',
-      company: job.employer_name || 'Unknown',
-      location: location || '',
-      salary: formatSalary(job),
-      publisher: job.job_publisher || '',
-      applyLink: job.job_apply_link || '',
-      description: job.job_description || '',
-      postedAt: job.job_posted_at_datetime_utc || '',
-      savedAt: new Date().toISOString(),
-      status: 'saved',
-      flags: flags,
-      signals: signals,
-      tailoredResume: null
+
+    // AI Analysis — show stored if available, else show "Run" button
+
+    const geminiSection = document.getElementById('modalGeminiSection');
+
+    geminiSection.style.display = 'block';
+
+    const geminiOutput = document.getElementById('modalGeminiOutput');
+
+    const geminiSpinner = document.getElementById('modalGeminiSpinner');
+
+    geminiSpinner.style.display = 'none';
+
+
+
+    if (job.aiAnalysis && job.aiAnalysis.text) {
+
+      // Re-render from stored raw text — no API call
+
+      renderGeminiAnalysisText(job.aiAnalysis.text, geminiOutput);
+
+      // Show timestamp
+
+      const ts = job.aiAnalysis.generatedAt ? new Date(job.aiAnalysis.generatedAt).toLocaleDateString() : '';
+
+      if (ts) {
+
+        const tsEl = document.createElement('div');
+
+        tsEl.style.cssText = 'font-size:11px;color:var(--muted);margin-top:8px;';
+
+        tsEl.textContent = `Analysis from ${ts}`;
+
+        geminiOutput.appendChild(tsEl);
+
+      }
+
+    } else {
+
+      geminiOutput.innerHTML = `
+
+        <div style="text-align:center;padding:16px 0;">
+
+          <button class="btn btn-sm btn-outline-custom" onclick="runAnalysisForSavedJob('${job.id}', 'ai')">
+
+            <i class="fas fa-robot me-1"></i>Run AI Analysis
+
+          </button>
+
+          <div style="font-size:12px;color:var(--muted);margin-top:6px;">Analysis not stored — click to generate</div>
+
+        </div>`;
+
+    }
+
+
+
+    // Match Score — same pattern
+
+    const matchSection = document.getElementById('modalMatchSection');
+
+    matchSection.style.display = 'block';
+
+    const matchOutput = document.getElementById('modalMatchOutput');
+
+    const matchSpinner = document.getElementById('modalMatchSpinner');
+
+    matchSpinner.style.display = 'none';
+
+
+
+    if (job.matchScore && job.matchScore.text) {
+
+      renderMatchScoreText(job.matchScore.text, matchOutput);
+
+      const ts = job.matchScore.generatedAt ? new Date(job.matchScore.generatedAt).toLocaleDateString() : '';
+
+      if (ts) {
+
+        const tsEl = document.createElement('div');
+
+        tsEl.style.cssText = 'font-size:11px;color:var(--muted);margin-top:8px;';
+
+        tsEl.textContent = `Match score from ${ts}`;
+
+        matchOutput.appendChild(tsEl);
+
+      }
+
+    } else {
+
+      matchOutput.innerHTML = `
+
+        <div style="text-align:center;padding:16px 0;">
+
+          <button class="btn btn-sm btn-outline-custom" onclick="runAnalysisForSavedJob('${job.id}', 'match')">
+
+            <i class="fas fa-chart-bar me-1"></i>Run Match Score
+
+          </button>
+
+        </div>`;
+
+    }
+
+
+
+    // Deep Analysis — show stored if available
+
+    const deepSection = document.getElementById('modalDeepSection');
+
+    if (deepSection) {
+
+      deepSection.style.display = 'block';
+
+      const deepOutput = document.getElementById('modalDeepOutput');
+
+      const deepSpinner = document.getElementById('modalDeepSpinner');
+
+      if (deepSpinner) deepSpinner.style.display = 'none';
+
+      const deepBtn = document.getElementById('modalDeepAnalysisBtn');
+
+
+
+      if (job.deepAnalysis && job.deepAnalysis.text) {
+
+        if (deepBtn) deepBtn.style.display = 'none';
+
+        renderDeepAnalysisText(job.deepAnalysis.text, deepOutput);
+
+        const ts = job.deepAnalysis.generatedAt ? new Date(job.deepAnalysis.generatedAt).toLocaleDateString() : '';
+
+        if (ts) {
+
+          const tsEl = document.createElement('div');
+
+          tsEl.style.cssText = 'font-size:11px;color:var(--muted);margin-top:8px;';
+
+          tsEl.textContent = `Deep analysis from ${ts}`;
+
+          deepOutput.appendChild(tsEl);
+
+        }
+
+      } else {
+
+        if (deepOutput) deepOutput.innerHTML = '';
+
+        if (deepBtn) deepBtn.style.display = 'inline-block';
+
+      }
+
+    }
+
+
+
+    // Store current job id for the modal actions (save btn, tailor, etc.)
+
+    MODAL_CURRENT_SAVED_JOB_ID = job.id;
+
+    MODAL_CURRENT_JOB_IDX = null; // not a search result
+
+
+
+    // Show modal
+
+    const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
+
+    modal.show();
+
+  }
+
+
+
+  async function runAnalysisForSavedJob(jobId, type) {
+
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+
+    if (!job) return;
+
+
+
+    // Build a minimal job-like object for the analysis functions
+
+    const jobLike = {
+
+      job_title: job.title,
+
+      employer_name: job.company,
+
+      job_description: job.description,
+
+      job_city: '', job_state: '', job_country: '',
+
+      job_min_salary: null, job_max_salary: null,
+
+      job_salary_period: null, job_posted_at_timestamp: null,
+
+      job_apply_is_direct: !!job.applyLink
+
     };
 
+
+
+    if (type === 'ai') {
+
+      document.getElementById('modalGeminiSpinner').style.display = 'inline-block';
+
+      document.getElementById('modalGeminiOutput').innerHTML = '';
+
+      const text = await runModalGeminiAnalysisRaw(jobLike);
+
+      if (text) {
+
+        job.aiAnalysis = { text, generatedAt: new Date().toISOString() };
+
+        saveSavedJobs().catch(console.error);
+
+        renderGeminiAnalysisText(text, document.getElementById('modalGeminiOutput'));
+
+      }
+
+      document.getElementById('modalGeminiSpinner').style.display = 'none';
+
+    } else if (type === 'match') {
+
+      document.getElementById('modalMatchSpinner').style.display = 'inline-block';
+
+      document.getElementById('modalMatchOutput').innerHTML = '';
+
+      const text = await runModalMatchScoreRaw(jobLike);
+
+      if (text) {
+
+        job.matchScore = { text, generatedAt: new Date().toISOString() };
+
+        saveSavedJobs().catch(console.error);
+
+        renderMatchScoreText(text, document.getElementById('modalMatchOutput'));
+
+      }
+
+      document.getElementById('modalMatchSpinner').style.display = 'none';
+
+    }
+
+  }
+
+
+
+  function modalSaveJob() {
+
+    if (MODAL_CURRENT_SAVED_JOB_ID !== null) {
+
+      // Already saved — show toast
+
+      showToast('Already saved', 'info');
+
+      return;
+
+    }
+
+    if (MODAL_CURRENT_JOB_IDX === null) return;
+
+    const job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+
+    if (!job) return;
+
+    const btn = document.getElementById('modalSaveBtn');
+
+    saveJob(job, btn);
+
+  }
+
+
+
+
+
+  function modalTailor() {
+
+    if (MODAL_CURRENT_SAVED_JOB_ID !== null) {
+
+      // Opened from saved jobs tab
+
+      const modalEl = document.getElementById('jobDetailModal');
+
+      const modal = bootstrap.Modal.getInstance(modalEl);
+
+      if (modal) modal.hide();
+
+      tailorFromSaved(MODAL_CURRENT_SAVED_JOB_ID);
+
+      return;
+
+    }
+
+    if (MODAL_CURRENT_JOB_IDX === null) return;
+
+    // Close modal first, then go to tailor tab
+
+    const modalEl = document.getElementById('jobDetailModal');
+
+    const modal = bootstrap.Modal.getInstance(modalEl);
+
+    if (modal) modal.hide();
+
+    tailorByIdx(MODAL_CURRENT_JOB_IDX);
+
+  }
+
+
+
+  // ============================================================
+
+  //  DEEP ANALYSIS
+
+  // ============================================================
+
+  // Change 6: frontend wrapper — determines job source and delegates to runDeepAnalysis
+  function triggerDeepAnalysis() {
+
+    let job = null;
+
+    let jobId = null;
+
+
+
+    if (MODAL_CURRENT_SAVED_JOB_ID !== null) {
+
+      // Opened from Saved Jobs tab
+
+      job = SAVED_JOBS.find(j => j.id === MODAL_CURRENT_SAVED_JOB_ID);
+
+      jobId = MODAL_CURRENT_SAVED_JOB_ID;
+
+    } else if (MODAL_CURRENT_JOB_IDX !== null) {
+
+      // Opened from Search tab
+
+      job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+
+      jobId = null;
+
+    }
+
+
+
+    if (!job) { showToast('Job data not available', 'warning'); return; }
+
+    runDeepAnalysis(job, jobId);
+
+  }
+
+
+
+  async function runDeepAnalysis(job, jobId) {
+
+    const deepOutput = document.getElementById('modalDeepOutput');
+
+    const deepSpinner = document.getElementById('modalDeepSpinner');
+
+    const deepBtn = document.getElementById('modalDeepAnalysisBtn');
+
+
+
+    if (deepBtn) deepBtn.style.display = 'none';
+
+    if (deepSpinner) deepSpinner.style.display = 'inline-block';
+
+    if (deepOutput) deepOutput.innerHTML = '';
+
+
+
+    const geminiKey = getNextGeminiKey();
+
+    if (!geminiKey) {
+
+      if (deepOutput) deepOutput.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings.</span>';
+
+      if (deepSpinner) deepSpinner.style.display = 'none';
+
+      return;
+
+    }
+
+
+
+    // Get description - works for both search results and saved jobs
+
+    const desc = (job.job_description || job.description || '').substring(0, 4000);
+
+    const title = job.job_title || job.title || 'N/A';
+
+    const company = job.employer_name || job.company || 'N/A';
+
+    const location = job.job_city ? [job.job_city, job.job_state].filter(Boolean).join(', ') : (job.location || 'N/A');
+
+    const salary = formatSalary(job) || (job.salary ? `$${job.salary}` : 'NOT LISTED');
+
+
+
+    const prompt = `You are a senior career advisor giving deep, honest analysis. No filler. No corporate speak.
+
+CANDIDATE BACKGROUND:
+
+Angelo Moya — Operations Lead & self-taught Full-Stack Developer at Techstyle/Fabletics (contractor, 5+ years). Built FIOS: full-stack CRM managing 44,000+ influencer orders across 3 departments (Fabletics, Yitty, Scrubs), eliminating 3,086 hours/year of manual work (1.5 FTEs). Self-taught Google Apps Script, HTML/CSS/JavaScript, REST APIs, Google Workspace. Integrated Gemini AI, Bond API, GRIN API, USPS geocoding APIs. Led cross-functional work with Engineering, Risk Management, Product Management teams. Presented to Senior Director → briefed Chief Growth Officer. System selected as foundation for company-wide AI initiative. Previous experience: Digital Marketing at Confie ($400K monthly ad budget, Employee of the Year 2018), Buyer at Safran Aerospace (98% on-time delivery, 15% cost savings through vendor negotiations), Network Specialist/Team Lead at Telvista (technical support, system deployment, team leadership). Currently also Airport Facilities Supervisor at SP+. Target roles: PM, Technical PM, Marketing Ops Manager, Operations Manager. San Diego CA (hybrid/remote ok). Salary target $70K+. No formal degree — high school diploma. Self-taught developer since April 2024. Total career experience: 12+ years.
+
+JOB POSTING:
+
+Title: ${title}
+
+Company: ${company}
+
+Location: ${location}
+
+Salary: ${salary}
+
+DESCRIPTION:
+
+${desc}
+
+---
+
+Respond in EXACTLY this format. Complete every section. Be direct and honest.
+
+🏢 COMPANY DEEP DIVE
+
+[3-4 sentences: company stage (startup/growth/enterprise), industry health, any known signals (Glassdoor, layoffs, pivots, funding). If you don't have reliable info, say so. Flag any red flags honestly.]
+
+🎯 ROLE FIT ANALYSIS
+
+[3-4 sentences: how does this role map to Angelo's trajectory from contractor → PM/Ops Leader? Is this a step up, lateral move, or step back? What from his background transfers most directly? What's the biggest gap?]
+
+📄 RESUME STRATEGY
+
+• [Specific bullet or experience to LEAD WITH for this role]
+
+• [What to cut or de-emphasize]
+
+• [How to frame the FIOS project for this specific company/role]
+
+• [One-line cover letter angle that would resonate with THIS company]
+
+💡 OVERALL SCORE: [X/10]
+
+[2-3 sentences: combined assessment of legitimacy + role fit + career trajectory alignment + company health. Be honest if it's a reach or a poor fit. Give a real recommendation — apply, skip, or apply with modifications.]`;
+
+
+
+    try {
+
+      const response = await fetch(
+
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+
+        {
+
+          method: 'POST',
+
+          headers: { 'Content-Type': 'application/json' },
+
+          body: JSON.stringify({
+
+            contents: [{ parts: [{ text: prompt }] }],
+
+            generationConfig: { temperature: 0.4, maxOutputTokens: 4000 }
+
+          })
+
+        }
+
+      );
+
+      if (!response.ok) throw new Error(`Gemini ${response.status}`);
+
+      const data = await response.json();
+
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!text) throw new Error('No output');
+
+
+
+      renderDeepAnalysisText(text, deepOutput);
+
+
+
+      // Cache and store if job is saved
+
+      if (jobId) {
+
+        const savedJob = SAVED_JOBS.find(j => j.id === jobId);
+
+        if (savedJob) {
+
+          savedJob.deepAnalysis = { text, generatedAt: new Date().toISOString() };
+
+          saveSavedJobs().catch(console.error);
+
+        }
+
+      } else if (MODAL_CURRENT_JOB_IDX !== null) {
+
+        // Search result — cache it
+
+        const searchJob = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+
+        if (searchJob) {
+
+          MODAL_ANALYSIS_CACHE[searchJob.job_id] = MODAL_ANALYSIS_CACHE[searchJob.job_id] || {};
+
+          MODAL_ANALYSIS_CACHE[searchJob.job_id].deepText = text;
+
+        }
+
+      }
+
+
+
+    } catch(e) {
+
+      if (deepOutput) deepOutput.innerHTML = `<span style="color:var(--muted);font-size:12px;">Deep analysis unavailable — ${escapeHtml(e.message)}</span>`;
+
+      if (deepBtn) deepBtn.style.display = 'inline-block';
+
+    } finally {
+
+      if (deepSpinner) deepSpinner.style.display = 'none';
+
+    }
+
+  }
+
+
+
+  function renderDeepAnalysisText(text, outputEl) {
+
+    if (!outputEl) return;
+
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    const DEEP_HEADERS = ['🏢 COMPANY DEEP DIVE', '🎯 ROLE FIT ANALYSIS', '📄 RESUME STRATEGY', '💡 OVERALL SCORE'];
+
+    const lines = text.split('\n');
+
+    const parts = [];
+
+
+
+    // Extract overall score for badge
+
+    const overallMatch = text.match(/OVERALL SCORE:\s*(\d+)/i);
+
+    const overallScore = overallMatch ? parseInt(overallMatch[1]) : null;
+
+    const scoreColor = overallScore === null ? '#6c757d' :
+
+                       overallScore >= 7 ? '#198754' :
+
+                       overallScore >= 4 ? '#fd7e14' : '#dc3545';
+
+
+
+    for (const line of lines) {
+
+      const trimmed = line.trim();
+
+      if (!trimmed) continue;
+
+
+
+      if (DEEP_HEADERS.some(h => trimmed.startsWith(h))) {
+
+        // Check if this is the score line
+
+        const isScoreLine = trimmed.startsWith('💡 OVERALL SCORE');
+
+        const scoreText = isScoreLine && overallScore !== null
+
+          ? ` <span style="font-size:18px;font-weight:900;color:${scoreColor};">${overallScore}/10</span>`
+
+          : '';
+
+        parts.push(`<div style="margin-top:16px;margin-bottom:6px;padding-top:12px;border-top:1px solid #e9ecef;">
+
+          <strong style="font-size:13px;color:#1a1a2e;">${esc(trimmed.replace(/:\s*\d+\/\d+/, ''))}${scoreText}</strong>
+
+        </div>`);
+
+        continue;
+
+      }
+
+
+
+      if (/^[•\-\*]/.test(trimmed) || /^\d+\./.test(trimmed)) {
+
+        const content = trimmed.replace(/^[•\-\*]\s*/, '').replace(/^\d+\.\s*/, '');
+
+        parts.push(`<div style="display:flex;gap:8px;margin-bottom:5px;padding-left:4px;">
+
+          <span style="color:#6f42c1;font-weight:700;flex-shrink:0;">•</span>
+
+          <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+
+        </div>`);
+
+        continue;
+
+      }
+
+
+
+      parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+
+    }
+
+
+
+    outputEl.innerHTML = `<div style="padding:4px 0;">${parts.join('')}</div>`;
+
+  }
+
+
+
+  function toggleJD() {
+
+    const jd = document.getElementById('modalJobDescription');
+
+    const icon = document.getElementById('toggleJDIcon');
+
+    if (!jd) return;
+
+    const isHidden = jd.style.display === 'none';
+
+    jd.style.display = isHidden ? 'block' : 'none';
+
+    icon.className = isHidden ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+
+  }
+
+
+
+  // ============================================================
+
+  //  JOB SCORING
+
+  // ============================================================
+
+  function scoreJob(job) {
+
+    const flags = [];
+
+    const signals = [];
+
+    const now = Date.now();
+
+    const postedDate = job.job_posted_at_timestamp ? job.job_posted_at_timestamp * 1000 : null;
+
+    const daysSincePosted = postedDate
+
+      ? Math.floor((now - postedDate) / (1000 * 60 * 60 * 24))
+
+      : null;
+
+
+
+    // Red flags
+
+    if (!job.job_min_salary && !job.job_max_salary && !job.job_salary_currency)
+
+      flags.push('No salary posted');
+
+    if (daysSincePosted !== null && daysSincePosted > 14)
+
+      flags.push(`Posted ${daysSincePosted}d ago`);
+
+    const agencyKeywords = ['staffing', 'recruiting', 'talent solutions', 'confidential', 'search firm'];
+
+    if (agencyKeywords.some(k => (job.employer_name || '').toLowerCase().includes(k)))
+
+      flags.push('Staffing/agency');
+
+    const badWords = ['rockstar', 'ninja', 'wizard', 'wear many hats', 'wear all hats'];
+
+    if (badWords.some(k => (job.job_description || '').toLowerCase().includes(k)))
+
+      flags.push('Vague/problematic JD');
+
+
+
+    // Green signals
+
+    const minSalary = job.job_min_salary || 0;
+
+    const maxSalary = job.job_max_salary || 0;
+
+    const salaryPeriod = job.job_salary_period || '';
+
+    const annualSalary = salaryPeriod === 'HOUR' ? minSalary * 2080 :
+
+                         salaryPeriod === 'MONTH' ? minSalary * 12 : minSalary;
+
+    if (annualSalary >= 65000 || maxSalary >= 65000)
+
+      signals.push('Salary $65k+');
+
+    if (daysSincePosted !== null && daysSincePosted <= 3)
+
+      signals.push('Fresh posting');
+
+    if (job.job_apply_is_direct === true)
+
+      signals.push('Direct apply');
+
+    if ((job.job_employment_type || '').includes('FULLTIME'))
+
+      signals.push('Full-time confirmed');
+
+
+
+    return { flags, signals };
+
+  }
+
+
+
+  // ============================================================
+
+  //  SAVE JOB
+
+  // ============================================================
+
+  function saveJobByIdx(cacheIdx, btn) {
+
+    const job = SEARCH_RESULTS_CACHE[cacheIdx];
+
+    if (!job) { showToast('Job data not found', 'danger'); return; }
+
+    saveJob(job, btn);
+
+  }
+
+
+
+  function tailorByIdx(cacheIdx) {
+
+    const job = SEARCH_RESULTS_CACHE[cacheIdx];
+
+    if (!job) { showToast('Job data not found', 'danger'); return; }
+
+    CURRENT_TAILOR_JOB_ID = null;
+
+    document.getElementById('tailorJobTitle').value = job.job_title || '';
+
+    document.getElementById('tailorCompany').value = job.employer_name || '';
+
+    document.getElementById('tailorJD').value = job.job_description || '';
+
+    clearTailorOutput();
+
+    showTab('tailor');
+
+  }
+
+
+
+  function saveJob(job, btn) {
+
+    // Check for duplicate
+
+    if (SAVED_JOBS.some(j => j.id === job.job_id || j.jobId === job.job_id)) {
+
+      showToast('Already saved!', 'warning');
+
+      return;
+
+    }
+
+
+
+    const { flags, signals } = scoreJob(job);
+
+    const location = [job.job_city, job.job_state].filter(Boolean).join(', ');
+
+
+
+    const savedJob = {
+
+      id: job.job_id + '_' + Date.now(),
+
+      jobId: job.job_id,
+
+      title: job.job_title || 'Untitled',
+
+      company: job.employer_name || 'Unknown',
+
+      location: location || '',
+
+      salary: formatSalary(job),
+
+      publisher: job.job_publisher || '',
+
+      applyLink: job.job_apply_link || '',
+
+      description: job.job_description || '',
+
+      postedAt: job.job_posted_at_datetime_utc || '',
+
+      savedAt: new Date().toISOString(),
+
+      status: 'saved',
+
+      flags: flags,
+
+      signals: signals,
+
+      tailoredResume: null,
+
+      aiAnalysis: null,
+
+      matchScore: null,
+
+      deepAnalysis: null
+
+    };
+
+
+
+    // If we have cached analysis from when the modal was open, store it with the job
+
+    const cached = MODAL_ANALYSIS_CACHE[job.job_id];
+
+    if (cached) {
+
+      if (cached.aiText) savedJob.aiAnalysis = { text: cached.aiText, generatedAt: cached.timestamp };
+
+      if (cached.matchText) savedJob.matchScore = { text: cached.matchText, generatedAt: cached.timestamp };
+
+    }
+
+
     SAVED_JOBS.unshift(savedJob); // most recent first
+
     updateSavedCountBadge();
+
+
 
     if (btn) {
+
       btn.disabled = true;
+
       btn.innerHTML = '<i class="fas fa-check me-1"></i>Saved!';
+
       btn.style.background = '#198754';
+
       btn.style.color = 'white';
+
       btn.style.border = 'none';
+
     }
+
+
 
     saveSavedJobs().then(() => {
+
       showToast(`"${savedJob.title}" saved ✓`, 'success');
+
     }).catch(e => handleApiError(e, 'saveJob'));
+
   }
+
+
 
   async function saveSavedJobs() {
+
     // Cancel any pending seen-only or dismiss-only write — this write includes all three arrays
+
     if (SEEN_WRITE_TIMER) { clearTimeout(SEEN_WRITE_TIMER); SEEN_WRITE_TIMER = null; }
+
     if (DISMISS_WRITE_TIMER) { clearTimeout(DISMISS_WRITE_TIMER); DISMISS_WRITE_TIMER = null; }
+
     SAVED_JOBS_SHA = await githubWriteWithRetry(
+
       'saved-jobs.json',
+
       { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+
       SAVED_JOBS_SHA
+
     );
+
     if (CURRENT_TAB === 'saved') renderSavedJobs();
+
     updateSavedCountBadge();
+
   }
+
+
 
   function updateSavedCountBadge() {
+
     const badge = document.getElementById('savedCountBadge');
+
     if (!badge) return;
+
     if (SAVED_JOBS.length > 0) {
+
       badge.textContent = SAVED_JOBS.length;
+
       badge.style.display = 'inline-block';
+
     } else {
+
       badge.style.display = 'none';
+
     }
+
   }
 
+
+
   // ============================================================
+
   //  SEEN JOBS
+
   // ============================================================
+
+
 
   function markJobSeen(jobId) {
+
     if (!jobId || SEEN_JOB_IDS.has(jobId)) return; // already seen, no-op
+
     SEEN_JOB_IDS.add(jobId);
+
     // Update card styling immediately in DOM (no reload needed)
+
     document.querySelectorAll('.job-card[data-job-id="' + jobId + '"]').forEach(card => {
+
       card.classList.add('seen-card');
+
       const titleEl = card.querySelector('.job-card-title');
+
       if (titleEl && !titleEl.querySelector('.seen-badge')) {
+
         titleEl.insertAdjacentHTML('beforeend', ' <span class="seen-badge"><i class="fas fa-eye"></i>Seen</span>');
+
       }
+
     });
+
     updateSeenCountLabel();
+
     // Debounced write — batch multiple quick opens into one GitHub write (5 second delay)
+
     if (SEEN_WRITE_TIMER) clearTimeout(SEEN_WRITE_TIMER);
+
     SEEN_WRITE_TIMER = setTimeout(() => {
+
       saveSeenJobs();
+
     }, 5000);
+
   }
+
+
 
   async function saveSeenJobs() {
+
     try {
+
       SAVED_JOBS_SHA = await githubWriteWithRetry(
+
         'saved-jobs.json',
+
         { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+
         SAVED_JOBS_SHA
+
       );
+
     } catch(e) {
+
       console.error('[JFIND saveSeenJobs]', e);
+
     }
+
   }
+
+
 
   function applyHideSeenFilter() {
+
     const hide = document.getElementById('hideSeenToggle').checked;
+
     document.querySelectorAll('.job-card').forEach(card => {
+
       if (card.classList.contains('seen-card')) {
+
         card.style.display = hide ? 'none' : '';
+
       }
+
     });
+
   }
+
+
 
   function updateSeenCountLabel() {
+
     const label = document.getElementById('seenCountLabel');
+
     if (!label) return;
+
     if (SEEN_JOB_IDS.size > 0) {
+
       label.textContent = SEEN_JOB_IDS.size + ' seen';
+
       label.style.display = 'inline';
+
     } else {
+
       label.style.display = 'none';
+
     }
+
   }
 
+
+
   // ============================================================
+
   //  DISMISSED JOBS
+
   // ============================================================
+
+
 
   function dismissJob(jobId, cardEl) {
+
     if (!jobId) return;
+
     DISMISSED_JOB_IDS.add(jobId);
+
     // Immediately fade the card out and remove it from the DOM
+
     if (cardEl) {
+
       cardEl.style.transition = 'opacity 0.2s';
+
       cardEl.style.opacity = '0';
+
       setTimeout(() => { if (cardEl.parentNode) cardEl.parentNode.removeChild(cardEl); }, 200);
+
     }
+
     // Debounced write — 5 seconds, same pattern as seen jobs
+
     if (DISMISS_WRITE_TIMER) clearTimeout(DISMISS_WRITE_TIMER);
+
     DISMISS_WRITE_TIMER = setTimeout(() => saveDismissedJobs(), 5000);
+
   }
+
+
 
   async function saveDismissedJobs() {
+
     try {
+
       SAVED_JOBS_SHA = await githubWriteWithRetry(
+
         'saved-jobs.json',
+
         { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+
         SAVED_JOBS_SHA
+
       );
+
     } catch(e) {
+
       console.error('[JFIND saveDismissedJobs]', e);
+
     }
+
   }
+
+
 
   function applyDismissedFilter() {
+
     document.querySelectorAll('.job-card[data-job-id]').forEach(card => {
+
       const id = card.getAttribute('data-job-id');
+
       if (id && DISMISSED_JOB_IDS.has(id)) {
+
         card.style.display = 'none';
+
       }
+
     });
+
   }
 
+
+
   // ============================================================
+
   //  PAGINATION (LOAD MORE)
+
   // ============================================================
+
+
 
   function buildLoadMoreButton(lastPageCount) {
+
     // If last page returned fewer than 10 results, there are no more pages
+
     if (lastPageCount < 10) return '';
+
     return `<div style="text-align:center;padding:16px 0 8px;">
+
       <button id="loadMoreBtn" class="btn btn-outline-custom" onclick="loadMoreJobs()">
+
         <i class="fas fa-chevron-down me-2"></i>Load More Jobs
+
       </button>
+
     </div>`;
+
   }
+
+
 
   async function loadMoreJobs() {
+
     const btn = document.getElementById('loadMoreBtn');
+
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...'; }
 
+
+
     const genAtStart = SEARCH_GEN;   // capture generation — discard results if user ran a new search while we were waiting
+
     CURRENT_PAGE += 1;
+
     try {
+
       const jobs = await searchJobs(
+
         CURRENT_SEARCH_QUERY,
+
         CURRENT_SEARCH_FILTERS.dateFilter,
+
         CURRENT_SEARCH_FILTERS.remoteOnly,
+
         CURRENT_PAGE
+
       );
+
       if (SEARCH_GEN !== genAtStart) return; // new search fired while we were waiting — discard stale results
+
       if (!jobs || jobs.length === 0) {
+
         if (btn) { btn.style.display = 'none'; }
+
         showToast('No more results found', 'warning');
+
         return;
+
       }
+
       appendSearchResults(jobs);
+
     } catch(e) {
+
       CURRENT_PAGE -= 1; // revert on failure
+
       handleApiError(e, 'loadMore');
+
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Load More Jobs'; }
+
     }
+
   }
+
+
 
   function appendSearchResults(jobs) {
+
     const resultsDiv = document.getElementById('searchResults');
+
     // Find where the cache currently ends so new indices don't collide
+
     const startIdx = Object.keys(SEARCH_RESULTS_CACHE).length;
+
     jobs.forEach((job, i) => { SEARCH_RESULTS_CACHE[startIdx + i] = job; });
+
     const newCardsHtml = jobs.map((job, i) => buildJobCard(job, startIdx + i)).join('');
 
+
+
     // Remove the existing Load More button before appending new cards
+
     const existingBtn = document.getElementById('loadMoreBtn');
+
     if (existingBtn) existingBtn.parentElement.remove();
 
+
+
     resultsDiv.insertAdjacentHTML('beforeend', newCardsHtml);
+
     // Apply filters to newly added cards
+
     applyHideSeenFilter();
+
     applyDismissedFilter();
 
+
+
     // Re-add Load More button at the bottom
+
     resultsDiv.insertAdjacentHTML('beforeend', buildLoadMoreButton(jobs.length));
 
+
+
     // Update the header count to reflect total loaded
+
     const header = resultsDiv.querySelector('.results-header');
+
     if (header) {
+
       const total = Object.keys(SEARCH_RESULTS_CACHE).length;
+
       header.innerHTML = `<i class="fas fa-list-ul me-1"></i>${total} result${total === 1 ? '' : 's'} loaded`;
+
     }
+
+
 
     const btn = document.getElementById('loadMoreBtn');
+
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Load More Jobs'; }
+
   }
 
+
+
   // ============================================================
+
   //  SAVED JOBS TAB
+
   // ============================================================
+
   function renderSavedJobs() {
+
     const container = document.getElementById('savedJobsList');
+
     if (!container) return;
 
+
+
     if (SAVED_JOBS.length === 0) {
+
       container.innerHTML = `
+
         <div class="empty-state">
+
           <i class="fas fa-bookmark d-block mb-2"></i>
+
           <p>No saved jobs yet. Search and save jobs from the Search tab.</p>
+
         </div>`;
+
       return;
+
     }
+
+
 
     container.innerHTML = SAVED_JOBS.map(job => buildSavedJobRow(job)).join('');
+
   }
+
+
 
   function buildSavedJobRow(job) {
+
     const daysSaved = Math.floor((Date.now() - new Date(job.savedAt).getTime()) / (1000 * 60 * 60 * 24));
+
     const statusLabel = job.status.charAt(0).toUpperCase() + job.status.slice(1);
 
+
+
     const flagsHtml = (job.flags && job.flags.length > 0)
+
       ? `<div class="saved-job-flags">${job.flags.map(f => `<span class="flag-badge">${escapeHtml(f)}</span>`).join('')}</div>`
+
       : '';
+
+
 
     const signalsHtml = (job.signals && job.signals.length > 0)
+
       ? `<div class="saved-job-flags">${job.signals.map(s => `<span class="signal-badge${s === 'Fresh posting' ? ' fresh-badge' : ''}">${escapeHtml(s)}</span>`).join('')}</div>`
+
       : '';
 
+
+
     return `
+
       <div class="saved-job-row" id="saved-row-${job.id}">
+
         <div class="saved-job-info">
-          <div class="saved-job-title">${escapeHtml(job.title)}</div>
+
+          <div class="saved-job-title"
+               onclick="openSavedJobDetail('${job.id}')"
+               title="Click to view details">
+            ${escapeHtml(job.title)}
+          </div>
+
           <div class="saved-job-company">
+
             ${escapeHtml(job.company)}
+
             ${job.location ? `<span class="ms-2 text-muted" style="font-size:12px;">${escapeHtml(job.location)}</span>` : ''}
+
             ${job.salary ? `<span class="ms-2" style="font-size:12px;color:#065f46;font-weight:600;">$${escapeHtml(job.salary)}</span>` : ''}
+
           </div>
+
           <div class="mt-1">
+
             <span class="status-badge status-${job.status}">${statusLabel}</span>
+
             <span class="days-saved ms-2">${daysSaved === 0 ? 'Today' : daysSaved + 'd ago'}</span>
+
           </div>
+
           ${flagsHtml}${signalsHtml}
+
         </div>
+
+        <!-- Change 3: labeled action buttons with icon-on-top pattern -->
         <div class="saved-job-actions">
-          <button class="btn btn-sm btn-outline-custom" onclick="tailorFromSaved('${job.id}')" title="Tailor Resume">
-            <i class="fas fa-magic"></i>
+
+          <button class="btn btn-sm btn-secondary saved-action-btn" onclick="openSavedJobDetail('${job.id}')" title="View Details">
+            <i class="fas fa-eye"></i>
+            <span class="saved-action-label">View</span>
           </button>
+
+          <button class="btn btn-sm btn-outline-custom saved-action-btn" onclick="tailorFromSaved('${job.id}')" title="Tailor Resume">
+            <i class="fas fa-magic"></i>
+            <span class="saved-action-label">Tailor</span>
+          </button>
+
           ${job.applyLink ? `
-            <button class="btn btn-sm" onclick="applyToJob('${job.id}')"
-                    style="background:var(--success);color:white;border:none;min-height:32px;" title="Apply">
+            <button class="btn btn-sm saved-action-btn" onclick="applyToJob('${job.id}')"
+                    style="background:var(--success);color:white;border:none;" title="Apply">
               <i class="fas fa-external-link-alt"></i>
+              <span class="saved-action-label">Apply</span>
             </button>
           ` : ''}
-          <button class="btn btn-sm" onclick="updateJobStatus('${job.id}')"
-                  title="Update Status" style="background:#0dcaf0;color:#000;border:none;min-height:32px;">
+
+          <button class="btn btn-sm saved-action-btn" onclick="updateJobStatus('${job.id}')"
+                  title="Update Status" style="background:#0dcaf0;color:#000;border:none;">
             <i class="fas fa-tag"></i>
+            <span class="saved-action-label">Status</span>
           </button>
-          <button class="btn btn-sm btn-danger" onclick="removeJob('${job.id}')" title="Remove">
+
+          <button class="btn btn-sm btn-danger saved-action-btn" onclick="removeJob('${job.id}')" title="Remove">
             <i class="fas fa-trash"></i>
+            <span class="saved-action-label">Remove</span>
           </button>
+
         </div>
       </div>`;
+
   }
+
+
 
   function applyToJob(jobId) {
+
     const job = SAVED_JOBS.find(j => j.id === jobId);
+
     if (!job) return;
+
     if (job.applyLink) window.open(job.applyLink, '_blank');
+
     if (job.status === 'saved' || job.status === 'tailored') {
+
       job.status = 'applied';
+
       saveSavedJobs().catch(e => handleApiError(e, 'applyToJob'));
+
     }
+
   }
+
+
 
   function removeJob(jobId) {
+
     if (!confirm('Remove this job from your saved list?')) return;
+
     SAVED_JOBS = SAVED_JOBS.filter(j => j.id !== jobId);
+
     saveSavedJobs()
+
       .then(() => { showToast('Job removed', 'info'); })
+
       .catch(e => handleApiError(e, 'removeJob'));
+
   }
+
+
 
   function updateJobStatus(jobId) {
+
     const job = SAVED_JOBS.find(j => j.id === jobId);
+
     if (!job) return;
+
     const statuses = ['saved', 'tailored', 'applied', 'rejected'];
+
     const currentIdx = statuses.indexOf(job.status);
+
     const nextStatus = statuses[(currentIdx + 1) % statuses.length];
+
     job.status = nextStatus;
+
     saveSavedJobs()
+
       .then(() => showToast(`Status → ${nextStatus}`, 'info'))
+
       .catch(e => handleApiError(e, 'updateStatus'));
+
   }
 
+
+
   // ============================================================
+
   //  TAILOR RESUME
+
   // ============================================================
+
   function tailorFromSaved(jobId) {
+
     const job = SAVED_JOBS.find(j => j.id === jobId);
+
     if (!job) return;
+
     CURRENT_TAILOR_JOB_ID = jobId;
+
     document.getElementById('tailorJobTitle').value = job.title || '';
+
     document.getElementById('tailorCompany').value = job.company || '';
+
     document.getElementById('tailorJD').value = job.description || '';
 
+
+
     // If already has tailored resume, show it
+
     if (job.tailoredResume) {
+
       renderTailoredOutput(job.tailoredResume);
+
       document.getElementById('copyTailoredBtn').style.display = 'inline-block';
+
       document.getElementById('markAppliedBtn').style.display = 'inline-block';
+
       if (job.applyLink) {
+
         document.getElementById('tailorApplyLink').style.display = 'block';
+
         document.getElementById('applyLinkAnchor').href = job.applyLink;
+
       }
+
     } else {
+
       clearTailorOutput();
+
     }
+
     showTab('tailor');
+
   }
+
+
 
   function clearTailorOutput() {
+
     document.getElementById('tailorOutputArea').innerHTML = `
+
       <div class="empty-state" style="padding:40px 20px;">
+
         <i class="fas fa-magic d-block mb-2"></i>
+
         <p style="font-size:13px;">Tailored resume will appear here.</p>
+
       </div>`;
+
     document.getElementById('copyTailoredBtn').style.display = 'none';
+
     document.getElementById('markAppliedBtn').style.display = 'none';
+
     document.getElementById('tailorApplyLink').style.display = 'none';
+
     document.getElementById('tailorErrorMsg').style.display = 'none';
+
   }
+
+
 
   async function runTailor() {
+
     const jobTitle = document.getElementById('tailorJobTitle').value.trim();
+
     const company = document.getElementById('tailorCompany').value.trim();
+
     const jd = document.getElementById('tailorJD').value.trim();
 
+
+
     if (!jd) { showToast('Paste a job description first', 'warning'); return; }
+
     if (!RESUME_CONTENT) { showToast('Load your resume on the Resume tab first', 'warning'); return; }
 
+
+
     const btn = document.getElementById('tailorBtn');
+
     const loadingMsg = document.getElementById('tailorLoadingMsg');
+
     const errorMsg = document.getElementById('tailorErrorMsg');
 
+
+
     btn.disabled = true;
+
     btn.style.display = 'none';
+
     loadingMsg.style.display = 'block';
+
     errorMsg.style.display = 'none';
+
     document.getElementById('copyTailoredBtn').style.display = 'none';
+
     document.getElementById('markAppliedBtn').style.display = 'none';
 
+
+
     try {
+
       const result = await generateTailoredResume(jobTitle, company, jd);
+
       renderTailoredOutput(result);
 
+
+
       // Save to job if we have a job ID
+
       if (CURRENT_TAILOR_JOB_ID) {
+
         const job = SAVED_JOBS.find(j => j.id === CURRENT_TAILOR_JOB_ID);
+
         if (job) {
+
           job.tailoredResume = result;
+
           if (job.status === 'saved') job.status = 'tailored';
+
           saveSavedJobs().catch(e => console.error('[JFIND saveTailored]', e));
+
           if (job.applyLink) {
+
             document.getElementById('tailorApplyLink').style.display = 'block';
+
             document.getElementById('applyLinkAnchor').href = job.applyLink;
+
           }
+
           document.getElementById('markAppliedBtn').style.display = 'inline-block';
+
         }
+
       }
 
+
+
       document.getElementById('copyTailoredBtn').style.display = 'inline-block';
+
       showToast('Resume tailored ✓', 'success');
+
     } catch(e) {
+
       const msg = handleApiError(e, 'tailor');
+
       errorMsg.textContent = msg;
+
       errorMsg.style.display = 'block';
+
     } finally {
+
       btn.disabled = false;
+
       btn.style.display = 'block';
+
       loadingMsg.style.display = 'none';
+
     }
+
   }
 
+
+
   async function generateTailoredResume(jobTitle, company, jobDescription) {
+
     const prompt = `You are a professional resume writer helping a job applicant tailor their resume.
 
+
+
 CANDIDATE RESUME:
+
 ${RESUME_CONTENT}
 
+
+
 JOB TITLE: ${jobTitle}
+
 COMPANY: ${company}
+
 JOB DESCRIPTION:
+
 ${jobDescription}
 
+
+
 INSTRUCTIONS:
+
 1. Rewrite ONLY the bullet points in the work experience section to emphasize skills and achievements that match this specific job description. All other sections (education, certifications, skills, summary) must be returned verbatim.
+
 2. Use keywords and phrases from the job description naturally within existing bullets
+
 3. Do NOT add fabricated experience, new roles, or fake achievements
+
 4. Do NOT change job titles, dates, company names, education, or certifications
+
 5. Keep bullets that already match strongly as-is or with minor improvements
+
 6. Wrap ONLY changed bullets with [CHANGED] tags: [CHANGED]• Rewritten bullet[/CHANGED]
+
 7. Return the COMPLETE resume with ALL sections
+
+
 
 Return the full tailored resume now:`;
 
+
+
     const response = await fetch(
+
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${getNextGeminiKey()}`,
+
       {
+
         method: 'POST',
+
         headers: { 'Content-Type': 'application/json' },
+
         body: JSON.stringify({
+
           contents: [{ parts: [{ text: prompt }] }],
+
           generationConfig: { temperature: 0.3, maxOutputTokens: 4096 }
+
         })
+
       }
+
     );
+
+
 
     if (!response.ok) {
+
       const errText = await response.text().catch(() => '');
+
       throw new Error(`Gemini ${response.status}: ${errText}`);
+
     }
+
     const data = await response.json();
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!text) throw new Error('Gemini returned no output');
+
     return text;
+
   }
+
+
 
   function renderTailoredOutput(text) {
+
     // Escape HTML first, then apply [CHANGED] highlighting
+
     const escaped = escapeHtml(text);
+
     const html = escaped.replace(
+
       /\[CHANGED\]([\s\S]*?)\[\/CHANGED\]/g,
+
       '<span class="changed-highlight">$1</span>'
+
     );
+
     document.getElementById('tailorOutputArea').innerHTML =
+
       `<pre class="tailor-pre">${html}</pre>`;
+
   }
+
+
 
   function copyTailoredResume() {
+
     const pre = document.querySelector('.tailor-pre');
+
     if (!pre) return;
+
     const cleanText = pre.innerText
+
       .replace(/\[CHANGED\]/g, '')
+
       .replace(/\[\/CHANGED\]/g, '');
 
+
+
     const copy = (txt) => {
+
       navigator.clipboard.writeText(txt).then(() => {
+
         showToast('Resume copied! ✓', 'success');
+
       }).catch(() => {
+
         // Fallback
+
         const textarea = document.createElement('textarea');
+
         textarea.value = txt;
+
         textarea.style.position = 'fixed';
+
         textarea.style.opacity = '0';
+
         document.body.appendChild(textarea);
+
         textarea.focus();
+
         textarea.select();
+
         try { document.execCommand('copy'); showToast('Resume copied! ✓', 'success'); }
+
         catch(e) { showToast('Copy failed — select text manually', 'danger'); }
+
         textarea.remove();
+
       });
+
     };
+
     copy(cleanText);
+
   }
+
+
 
   function saveTailoredAndApply() {
+
     if (CURRENT_TAILOR_JOB_ID) {
+
       const job = SAVED_JOBS.find(j => j.id === CURRENT_TAILOR_JOB_ID);
+
       if (job) {
+
         job.status = 'applied';
+
         saveSavedJobs().catch(e => handleApiError(e, 'saveTailoredAndApply'));
+
         if (job.applyLink) window.open(job.applyLink, '_blank');
+
         showToast('Marked as applied ✓', 'success');
+
         return;
+
       }
+
     }
+
     showToast('No job linked — mark applied from Saved Jobs tab', 'warning');
+
   }
 
+
+
   // ============================================================
+
   //  RESUME TAB
+
   // ============================================================
+
   function updateCharCount() {
+
     const ta = document.getElementById('resumeTextarea');
+
     const cc = document.getElementById('charCount');
+
     if (ta && cc) {
+
       const len = ta.value.length;
+
       cc.textContent = len.toLocaleString() + ' character' + (len === 1 ? '' : 's');
+
     }
+
   }
+
+
 
   async function saveResume() {
+
     const btn = document.getElementById('saveResumeBtn');
+
     const content = document.getElementById('resumeTextarea').value;
+
     if (!content.trim()) { showToast('Resume is empty', 'warning'); return; }
 
+
+
     btn.disabled = true;
+
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
+
+
     try {
+
       RESUME_CONTENT = content;
+
       const payload = {
+
         lastUpdated: new Date().toISOString(),
+
         content: content
+
       };
+
       RESUME_SHA = await githubWriteWithRetry('resume.json', payload, RESUME_SHA);
+
       document.getElementById('resumeLastSaved').textContent =
+
         'Last saved: ' + new Date().toLocaleString();
+
       showToast('Resume saved ✓', 'success');
+
     } catch(e) {
+
       handleApiError(e, 'saveResume');
+
     } finally {
+
       btn.disabled = false;
+
       btn.innerHTML = '<i class="fas fa-save me-2"></i>Save to GitHub';
+
     }
+
   }
 
+
+
   // ============================================================
+
   //  UTILITY FUNCTIONS
+
   // ============================================================
+
   function formatSalary(job) {
+
     const min = job.job_min_salary;
+
     const max = job.job_max_salary;
+
     const period = job.job_salary_period || '';
+
     const currency = job.job_salary_currency || 'USD';
+
+
 
     if (!min && !max) return '';
 
+
+
     const fmt = (n) => {
+
       if (!n) return null;
+
       if (period === 'HOUR') return `$${n}/hr`;
+
       if (n >= 1000) return `$${Math.round(n / 1000)}k`;
+
       return `$${n}`;
+
     };
 
+
+
     const fMin = fmt(min);
+
     const fMax = fmt(max);
 
+
+
     if (fMin && fMax && fMin !== fMax) return `${fMin} – ${fMax}`;
+
     return fMin || fMax || '';
+
   }
+
+
 
   function formatPostedDate(job) {
+
     if (!job.job_posted_at_timestamp) return '';
+
     const now = Date.now();
+
     const posted = job.job_posted_at_timestamp * 1000;
+
     const days = Math.floor((now - posted) / (1000 * 60 * 60 * 24));
+
     if (days === 0) return 'Today';
+
     if (days === 1) return '1 day ago';
+
     return `${days} days ago`;
+
   }
+
+
 
   function escapeHtml(str) {
+
     if (str == null) return '';
+
     return String(str)
+
       .replace(/&/g, '&amp;')
+
       .replace(/</g, '&lt;')
+
       .replace(/>/g, '&gt;')
+
       .replace(/"/g, '&quot;')
+
       .replace(/'/g, '&#39;');
+
   }
 
 
 
+
+
+
+
   // ============================================================
+
   //  EVENT LISTENERS
+
   // ============================================================
+
   document.getElementById('searchQuery').addEventListener('keydown', function(e) {
+
     if (e.key === 'Enter') runSearch();
+
   });
+
+
 
   // (Tab rendering is handled inside showTab directly)
 
+
+
   // ============================================================
+
   //  BOOT
+
   // ============================================================
+
   document.addEventListener('DOMContentLoaded', function() {
+
     initApp();
+
   });
+
   </script>
+
 </body>
+
 </html>
+
