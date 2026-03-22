@@ -580,6 +580,22 @@
       letter-spacing: 3px;
     }
     #appLoadingOverlay p { color: var(--muted); font-size: 14px; }
+
+    /* ===== DISMISS BUTTON ===== */
+    .btn-dismiss {
+      background: transparent;
+      border: 1px solid #dee2e6;
+      color: #adb5bd;
+      border-radius: 6px;
+      padding: 4px 8px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-dismiss:hover {
+      background: #dc3545;
+      border-color: #dc3545;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -992,6 +1008,16 @@
   let SEEN_PENDING_WRITE = false;       // debounce: batch writes instead of one per card open
   let SEEN_WRITE_TIMER = null;
 
+  // Dismissed jobs — stored in saved-jobs.json as dismissedJobIds
+  let DISMISSED_JOB_IDS = new Set();   // permanently dismissed jobs
+  let DISMISS_WRITE_TIMER = null;       // debounce timer for dismiss writes
+
+  // Pagination state — tracks the current search for Load More
+  let CURRENT_SEARCH_QUERY = '';        // last search query
+  let CURRENT_SEARCH_FILTERS = {};      // last date filter + remote toggle state
+  let SEARCH_GEN = 0;                   // increments on each new search — Load More checks before appending
+  let CURRENT_PAGE = 1;                 // current page number loaded
+
   // Default settings (no credentials hardcoded — enter in Settings tab on first run)
   const DEFAULT_SETTINGS = {
     githubOwner: 'GYCoder-25',
@@ -1354,6 +1380,11 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
           SEEN_JOB_IDS = new Set(result.content.seenJobIds);
           updateSeenCountLabel();
         }
+        // Load dismissed job IDs (cross-device sync)
+        if (Array.isArray(result.content.dismissedJobIds)) {
+          DISMISSED_JOB_IDS = new Set(result.content.dismissedJobIds);
+          applyDismissedFilter(); // retroactively hide dismissed cards if search ran before background load finished
+        }
       } else {
         SAVED_JOBS = [];
         SAVED_JOBS_SHA = result.sha; // null if 404
@@ -1545,6 +1576,14 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     const btn = document.getElementById('searchBtn');
     const resultsDiv = document.getElementById('searchResults');
 
+    // Reset pagination state for fresh search
+    CURRENT_PAGE = 1;
+    SEARCH_GEN++;                        // invalidate any in-flight Load More for the previous query
+    CURRENT_SEARCH_QUERY = query;
+    CURRENT_SEARCH_FILTERS = { dateFilter, remoteOnly };
+    // Clear cache so Load More has correct index offsets on a new search
+    Object.keys(SEARCH_RESULTS_CACHE).forEach(k => delete SEARCH_RESULTS_CACHE[k]);
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
@@ -1555,7 +1594,7 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
       </div>`;
 
     try {
-      const jobs = await searchJobs(query, dateFilter, remoteOnly);
+      const jobs = await searchJobs(query, dateFilter, remoteOnly, 1);
       if (!jobs || jobs.length === 0) {
         resultsDiv.innerHTML = `
           <div class="empty-state">
@@ -1578,10 +1617,10 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     }
   }
 
-  async function searchJobs(query, dateFilter, remoteOnly) {
+  async function searchJobs(query, dateFilter, remoteOnly, page = 1) {
     const params = new URLSearchParams({
       query: query,
-      page: '1',
+      page: String(page),
       num_pages: '1',
       country: 'us',
       employment_types: 'FULLTIME',
@@ -1612,9 +1651,10 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     // Populate cache with index keys so cards don't need to embed JSON in attributes
     jobs.forEach((job, idx) => { SEARCH_RESULTS_CACHE[idx] = job; });
     const cardsHtml = jobs.map((job, idx) => buildJobCard(job, idx)).join('');
-    resultsDiv.innerHTML = header + cardsHtml;
-    // Re-apply hide-seen filter if toggle is on (new results need filtering too)
+    resultsDiv.innerHTML = header + cardsHtml + buildLoadMoreButton(jobs.length);
+    // Re-apply filters (new results need filtering too)
     applyHideSeenFilter();
+    applyDismissedFilter();
   }
 
   function buildSourceBadge(publisher) {
@@ -1673,6 +1713,9 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
         ${(flagBadges || signalBadges) ? `<div class="job-card-badges">${flagBadges}${signalBadges}</div>` : ''}
         ${desc ? `<div class="job-card-desc">${escapeHtml(desc)}${job.job_description && job.job_description.length > 200 ? '...' : ''}</div>` : ''}
         <div class="job-card-actions">
+          <button class="btn btn-sm btn-dismiss" onclick="dismissJob('${escapeHtml(job.job_id || '')}', this.closest('.job-card'))" title="Not interested">
+            <i class="fas fa-thumbs-down"></i>
+          </button>
           <button class="btn btn-sm btn-outline-custom" onclick="saveJobByIdx(${cacheIdx}, this)">
             <i class="fas fa-bookmark me-1"></i>Save Job
           </button>
@@ -2153,11 +2196,12 @@ MATCH SCORE: [X/10]
   }
 
   async function saveSavedJobs() {
-    // Cancel any pending seen-only write — this write already includes seenJobIds
+    // Cancel any pending seen-only or dismiss-only write — this write includes all three arrays
     if (SEEN_WRITE_TIMER) { clearTimeout(SEEN_WRITE_TIMER); SEEN_WRITE_TIMER = null; }
+    if (DISMISS_WRITE_TIMER) { clearTimeout(DISMISS_WRITE_TIMER); DISMISS_WRITE_TIMER = null; }
     SAVED_JOBS_SHA = await githubWriteWithRetry(
       'saved-jobs.json',
-      { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), lastUpdated: new Date().toISOString() },
+      { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
       SAVED_JOBS_SHA
     );
     if (CURRENT_TAB === 'saved') renderSavedJobs();
@@ -2202,7 +2246,7 @@ MATCH SCORE: [X/10]
     try {
       SAVED_JOBS_SHA = await githubWriteWithRetry(
         'saved-jobs.json',
-        { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), lastUpdated: new Date().toISOString() },
+        { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
         SAVED_JOBS_SHA
       );
     } catch(e) {
@@ -2228,6 +2272,116 @@ MATCH SCORE: [X/10]
     } else {
       label.style.display = 'none';
     }
+  }
+
+  // ============================================================
+  //  DISMISSED JOBS
+  // ============================================================
+
+  function dismissJob(jobId, cardEl) {
+    if (!jobId) return;
+    DISMISSED_JOB_IDS.add(jobId);
+    // Immediately fade the card out and remove it from the DOM
+    if (cardEl) {
+      cardEl.style.transition = 'opacity 0.2s';
+      cardEl.style.opacity = '0';
+      setTimeout(() => { if (cardEl.parentNode) cardEl.parentNode.removeChild(cardEl); }, 200);
+    }
+    // Debounced write — 5 seconds, same pattern as seen jobs
+    if (DISMISS_WRITE_TIMER) clearTimeout(DISMISS_WRITE_TIMER);
+    DISMISS_WRITE_TIMER = setTimeout(() => saveDismissedJobs(), 5000);
+  }
+
+  async function saveDismissedJobs() {
+    try {
+      SAVED_JOBS_SHA = await githubWriteWithRetry(
+        'saved-jobs.json',
+        { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+        SAVED_JOBS_SHA
+      );
+    } catch(e) {
+      console.error('[JFIND saveDismissedJobs]', e);
+    }
+  }
+
+  function applyDismissedFilter() {
+    document.querySelectorAll('.job-card[data-job-id]').forEach(card => {
+      const id = card.getAttribute('data-job-id');
+      if (id && DISMISSED_JOB_IDS.has(id)) {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // ============================================================
+  //  PAGINATION (LOAD MORE)
+  // ============================================================
+
+  function buildLoadMoreButton(lastPageCount) {
+    // If last page returned fewer than 10 results, there are no more pages
+    if (lastPageCount < 10) return '';
+    return `<div style="text-align:center;padding:16px 0 8px;">
+      <button id="loadMoreBtn" class="btn btn-outline-custom" onclick="loadMoreJobs()">
+        <i class="fas fa-chevron-down me-2"></i>Load More Jobs
+      </button>
+    </div>`;
+  }
+
+  async function loadMoreJobs() {
+    const btn = document.getElementById('loadMoreBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...'; }
+
+    const genAtStart = SEARCH_GEN;   // capture generation — discard results if user ran a new search while we were waiting
+    CURRENT_PAGE += 1;
+    try {
+      const jobs = await searchJobs(
+        CURRENT_SEARCH_QUERY,
+        CURRENT_SEARCH_FILTERS.dateFilter,
+        CURRENT_SEARCH_FILTERS.remoteOnly,
+        CURRENT_PAGE
+      );
+      if (SEARCH_GEN !== genAtStart) return; // new search fired while we were waiting — discard stale results
+      if (!jobs || jobs.length === 0) {
+        if (btn) { btn.style.display = 'none'; }
+        showToast('No more results found', 'warning');
+        return;
+      }
+      appendSearchResults(jobs);
+    } catch(e) {
+      CURRENT_PAGE -= 1; // revert on failure
+      handleApiError(e, 'loadMore');
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Load More Jobs'; }
+    }
+  }
+
+  function appendSearchResults(jobs) {
+    const resultsDiv = document.getElementById('searchResults');
+    // Find where the cache currently ends so new indices don't collide
+    const startIdx = Object.keys(SEARCH_RESULTS_CACHE).length;
+    jobs.forEach((job, i) => { SEARCH_RESULTS_CACHE[startIdx + i] = job; });
+    const newCardsHtml = jobs.map((job, i) => buildJobCard(job, startIdx + i)).join('');
+
+    // Remove the existing Load More button before appending new cards
+    const existingBtn = document.getElementById('loadMoreBtn');
+    if (existingBtn) existingBtn.parentElement.remove();
+
+    resultsDiv.insertAdjacentHTML('beforeend', newCardsHtml);
+    // Apply filters to newly added cards
+    applyHideSeenFilter();
+    applyDismissedFilter();
+
+    // Re-add Load More button at the bottom
+    resultsDiv.insertAdjacentHTML('beforeend', buildLoadMoreButton(jobs.length));
+
+    // Update the header count to reflect total loaded
+    const header = resultsDiv.querySelector('.results-header');
+    if (header) {
+      const total = Object.keys(SEARCH_RESULTS_CACHE).length;
+      header.innerHTML = `<i class="fas fa-list-ul me-1"></i>${total} result${total === 1 ? '' : 's'} loaded`;
+    }
+
+    const btn = document.getElementById('loadMoreBtn');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-chevron-down me-2"></i>Load More Jobs'; }
   }
 
   // ============================================================
