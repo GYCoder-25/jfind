@@ -8353,12 +8353,15 @@ Start with: Dear Hiring Team,`;
     //   - Bullets: proper <ul><li> elements, indented
     const css = `
       * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { overflow: visible; }
       body {
         font-family: 'Segoe UI', Inter, Roboto, system-ui, sans-serif;
         font-size: 10.5pt;
         color: #1a1a1a;
         background: #f5f5f5;
         padding: 32px 0;
+        min-height: 100vh;
+        overflow: visible;
       }
       .resume-wrap {
         max-width: 800px;
@@ -8366,6 +8369,7 @@ Start with: Dear Hiring Team,`;
         padding: 40px 48px;
         background: #fff;
         box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        overflow: visible;
       }
       /* Header — the ONLY centered section */
       .rv-name {
@@ -8597,6 +8601,11 @@ Start with: Dear Hiring Team,`;
         padding-bottom: 10px;
         border-bottom: 1.5px solid #000;
         text-align: left;
+        white-space: nowrap;
+        overflow: visible;
+      }
+      @media print {
+        .cl-author-contact { font-size: 7.5pt; letter-spacing: -0.2px; }
       }
       /* Date + job reference */
       .cl-date {
