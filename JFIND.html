@@ -7369,6 +7369,33 @@ Return the full tailored resume now. Make it exceptional.`;
         continue;
       }
 
+      // Case C: title and date on SAME LINE separated by 2+ whitespace
+      // e.g. "Buyer                    August 2014 - November 2016"
+      //      "High School Diploma      September 2008 - June 2012"
+      const multiSpaceMatch = line.match(/^(.+?)\s{2,}(.+)$/);
+      if (multiSpaceMatch) {
+        const titlePart = multiSpaceMatch[1].trim();
+        const datePart  = multiSpaceMatch[2].trim();
+        // Only treat as job header if the right side looks like a date
+        if (DATE_RE.test(datePart) && !isAllCaps(titlePart)) {
+          let companyText = '';
+          let companyNonBlankIdx = i;
+          while (companyNonBlankIdx < lines.length && !lines[companyNonBlankIdx].trim()) companyNonBlankIdx++;
+          const lineAfterJob = companyNonBlankIdx < lines.length ? lines[companyNonBlankIdx].trim() : '';
+          if (lineAfterJob && isCompanyLine(lineAfterJob) && !isAllCaps(lineAfterJob) && !isDateLine(lineAfterJob)) {
+            companyText = lineAfterJob;
+            i = companyNonBlankIdx + 1;
+          }
+
+          parts.push(`<div class="rv-job">`);
+          parts.push(`<div class="rv-job-header"><span class="rv-job-title">${esc(titlePart)}</span><span class="rv-job-date">${esc(datePart)}</span></div>`);
+          if (companyText) parts.push(`<div class="rv-company">${esc(companyText)}</div>`);
+          parts.push(`</div>`);
+          inJobBlock = true;
+          continue;
+        }
+      }
+
       // --- Standalone date line (orphaned — unlikely but possible) ---
       if (isDateLine(line)) {
         parts.push(`<div class="rv-job-date" style="text-align:right;">${esc(line)}</div>`);
