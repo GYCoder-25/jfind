@@ -7178,6 +7178,221 @@ Return the full tailored resume now. Make it exceptional.`;
 
 
 
+  // ============================================================
+  //  NEW RESUME PARSER — parseResumeToHtml(text)
+  //  Replaces the old renderResumeHtml() call inside openResumeInNewTab().
+  //  Designed for the plain-text format produced by generateTailoredResume():
+  //
+  //  Line 1  → .rv-name  (centered, large, all-caps)
+  //  Line 2  → .rv-contact (centered)
+  //  blank   → skip (small spacer only when not consecutive)
+  //  ALL-CAPS line (len > 2, not name/contact) → .rv-section-header
+  //  "- " lines → <ul class="rv-bullets"><li> blocks
+  //  Job title line (followed by a date line OR containing date) → .rv-job-header flex row
+  //  Date line → right-aligned date in same .rv-job-header row
+  //  Company line (short, not ALL-CAPS, not bullet, after job/date block) → .rv-company
+  //  Everything else → .rv-summary-text paragraph
+  // ============================================================
+  function parseResumeToHtml(text) {
+    if (!text) return '';
+
+    const esc = s => String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    // Date-like pattern: month names, 4-digit years, "Present", ranges
+    const DATE_RE = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\b\d{4}\b|\bPresent\b|\b20\d\d\s*[-–]\s*(20\d\d|Present)\b/i;
+    // More permissive: any line that is mostly digits/months/hyphens/slashes and short
+    const DATE_LINE_RE = /^[\w\s,\-–\/]+\d{4}[\w\s,\-–\/]*$/;
+
+    const lines = text.split('\n');
+    const parts = [];
+    let i = 0;
+
+    // ---- Helper: is this line entirely uppercase (section header)? ----
+    function isAllCaps(line) {
+      const t = line.trim();
+      if (t.length <= 2) return false;
+      // Must have letters and all letters are uppercase
+      if (!/[A-Z]/.test(t)) return false;
+      return t === t.toUpperCase();
+    }
+
+    // ---- Helper: does this line look like a date range? ----
+    function isDateLine(line) {
+      const t = line.trim();
+      if (!t) return false;
+      // Short line (< 60 chars) that contains a date pattern
+      return t.length < 60 && DATE_RE.test(t) && DATE_LINE_RE.test(t);
+    }
+
+    // ---- Helper: does this line look like a company/location line? ----
+    // Short, not all-caps, not a bullet, not blank
+    function isCompanyLine(line) {
+      const t = line.trim();
+      if (!t || t.length > 80) return false;
+      if (t.startsWith('- ') || t.startsWith('• ')) return false;
+      if (isAllCaps(t)) return false;
+      if (DATE_RE.test(t) && isDateLine(t)) return false;
+      return true;
+    }
+
+    // ---- Skip leading blanks ----
+    while (i < lines.length && !lines[i].trim()) i++;
+
+    // ---- Line 1: Name ----
+    if (i < lines.length) {
+      parts.push(`<div class="rv-name">${esc(lines[i].trim())}</div>`);
+      i++;
+    }
+
+    // ---- Skip blanks ----
+    while (i < lines.length && !lines[i].trim()) i++;
+
+    // ---- Line 2 (or first non-blank after name): Contact row ----
+    // Collect until we hit a blank line or an all-caps line (section header)
+    const contactLines = [];
+    while (i < lines.length && lines[i].trim() && !isAllCaps(lines[i].trim())) {
+      contactLines.push(lines[i].trim());
+      i++;
+      // Stop after collecting 2 contact lines — the rest is body
+      if (contactLines.length >= 2) break;
+    }
+    if (contactLines.length > 0) {
+      parts.push(`<div class="rv-contact">${esc(contactLines.join(' | '))}</div>`);
+    }
+
+    // ---- Main body: sections, jobs, bullets, paragraphs ----
+    let bulletBuffer = [];   // pending bullet <li> items
+    let inJobBlock = false;  // are we currently inside a job entry?
+    let lastWasBlank = false;
+
+    function flushBullets() {
+      if (bulletBuffer.length > 0) {
+        parts.push(`<ul class="rv-bullets">${bulletBuffer.join('')}</ul>`);
+        bulletBuffer = [];
+      }
+    }
+
+    while (i < lines.length) {
+      const raw = lines[i];
+      const line = raw.trim();
+      i++;
+
+      // --- Blank line ---
+      if (!line) {
+        flushBullets();
+        if (!lastWasBlank) {
+          // Small spacing div — but don't pile them up
+          parts.push('<div style="margin:3px 0;"></div>');
+        }
+        lastWasBlank = true;
+        inJobBlock = false;
+        continue;
+      }
+      lastWasBlank = false;
+
+      // --- Bullet line (starts with "- " or "• ") ---
+      if (line.startsWith('- ') || line.startsWith('• ')) {
+        const content = line.startsWith('- ') ? line.slice(2) : line.slice(2);
+        bulletBuffer.push(`<li>${esc(content.trim())}</li>`);
+        continue;
+      }
+
+      // --- ALL-CAPS section header ---
+      if (isAllCaps(line)) {
+        flushBullets();
+        inJobBlock = false;
+        parts.push(`<div class="rv-section-header">${esc(line)}</div>`);
+        continue;
+      }
+
+      // --- Job title detection ---
+      // A job title line is followed (within the next 1-2 lines) by a date line,
+      // OR the line itself contains a date pattern and a separator (|)
+      // Strategy: peek ahead
+      flushBullets();
+
+      // Collect next non-blank line for lookahead
+      let nextNonBlankIdx = i;
+      while (nextNonBlankIdx < lines.length && !lines[nextNonBlankIdx].trim()) nextNonBlankIdx++;
+      const nextLine = nextNonBlankIdx < lines.length ? lines[nextNonBlankIdx].trim() : '';
+
+      // Case A: current line has no date, next line IS a date line
+      // → current line = job title, next line = date
+      if (!isDateLine(line) && isDateLine(nextLine) && !isAllCaps(line)) {
+        const dateText = nextLine;
+        i = nextNonBlankIdx + 1; // consume the date line
+
+        // Check for company line after the date
+        let companyText = '';
+        let companyNonBlankIdx = i;
+        while (companyNonBlankIdx < lines.length && !lines[companyNonBlankIdx].trim()) companyNonBlankIdx++;
+        const lineAfterDate = companyNonBlankIdx < lines.length ? lines[companyNonBlankIdx].trim() : '';
+        if (lineAfterDate && isCompanyLine(lineAfterDate) && !isAllCaps(lineAfterDate) && !isDateLine(lineAfterDate)) {
+          companyText = lineAfterDate;
+          i = companyNonBlankIdx + 1;
+        }
+
+        parts.push(`<div class="rv-job">`);
+        parts.push(`<div class="rv-job-header"><span class="rv-job-title">${esc(line)}</span><span class="rv-job-date">${esc(dateText)}</span></div>`);
+        if (companyText) parts.push(`<div class="rv-company">${esc(companyText)}</div>`);
+        parts.push(`</div>`);
+        inJobBlock = true;
+        continue;
+      }
+
+      // Case B: current line contains a date pattern inline (e.g., "Job Title | July 2024 - Present")
+      // Look for a pipe separator with a date after it
+      const pipeDateMatch = line.match(/^(.+?)\s*\|\s*(.+\d{4}.*)$/);
+      if (pipeDateMatch && DATE_RE.test(pipeDateMatch[2])) {
+        const titlePart = pipeDateMatch[1].trim();
+        const datePart = pipeDateMatch[2].trim();
+
+        let companyText = '';
+        let companyNonBlankIdx = i;
+        while (companyNonBlankIdx < lines.length && !lines[companyNonBlankIdx].trim()) companyNonBlankIdx++;
+        const lineAfterJob = companyNonBlankIdx < lines.length ? lines[companyNonBlankIdx].trim() : '';
+        if (lineAfterJob && isCompanyLine(lineAfterJob) && !isAllCaps(lineAfterJob) && !isDateLine(lineAfterJob)) {
+          companyText = lineAfterJob;
+          i = companyNonBlankIdx + 1;
+        }
+
+        parts.push(`<div class="rv-job">`);
+        parts.push(`<div class="rv-job-header"><span class="rv-job-title">${esc(titlePart)}</span><span class="rv-job-date">${esc(datePart)}</span></div>`);
+        if (companyText) parts.push(`<div class="rv-company">${esc(companyText)}</div>`);
+        parts.push(`</div>`);
+        inJobBlock = true;
+        continue;
+      }
+
+      // --- Standalone date line (orphaned — unlikely but possible) ---
+      if (isDateLine(line)) {
+        parts.push(`<div class="rv-job-date" style="text-align:right;">${esc(line)}</div>`);
+        continue;
+      }
+
+      // --- Regular paragraph / summary / skills text ---
+      // If it looks like a comma-separated skills list, use rv-skills-text
+      const commaCount = (line.match(/,/g) || []).length;
+      if (commaCount >= 4 && line.length > 60) {
+        parts.push(`<div class="rv-skills-text">${esc(line)}</div>`);
+      } else {
+        parts.push(`<p class="rv-summary-text">${esc(line)}</p>`);
+      }
+    }
+
+    // Flush any trailing bullets
+    flushBullets();
+
+    return `<div class="resume-wrap">${parts.join('\n')}</div>`;
+  }
+
+
+
   function renderResumeHtml(text) {
 
     if (!text) return '';
@@ -8125,148 +8340,159 @@ Start with: Dear Hiring Team,`;
 
     const text = job.tailoredResume;
 
-    // Use the existing renderResumeHtml() to produce structured HTML
-    const resumeBodyHtml = renderResumeHtml(text);
+    // Use the NEW parseResumeToHtml() parser — correctly handles plain-text resume format
+    const resumeBodyHtml = parseResumeToHtml(text);
 
-    // Full CSS for the standalone new-tab page — mirrors downloadResumeAsPdf() styles
-    // plus adds the warm amber company color from the design spec
+    // Full CSS for the standalone new-tab page
+    // Follows the a.png design spec exactly:
+    //   - Name + contact: centered (ONLY centered elements)
+    //   - Everything else: left-aligned
+    //   - Section headers: bold, ALL-CAPS, left-aligned, border-bottom rule
+    //   - Job headers: flexbox justify-content:space-between (title left, date right)
+    //   - Company: amber/orange #C97A2A
+    //   - Bullets: proper <ul><li> elements, indented
     const css = `
-      *, *::before, *::after { box-sizing: border-box; }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        font-family: 'Segoe UI', 'Inter', Roboto, system-ui, sans-serif;
+        font-family: 'Segoe UI', Inter, Roboto, system-ui, sans-serif;
         font-size: 10.5pt;
-        line-height: 1.5;
         color: #1a1a1a;
         background: #f5f5f5;
-        margin: 0;
-        padding: 20px;
+        padding: 32px 0;
       }
-      .rv-wrap {
-        max-width: 760px;
+      .resume-wrap {
+        max-width: 800px;
         margin: 0 auto;
-        background: white;
         padding: 40px 48px;
+        background: #fff;
         box-shadow: 0 2px 12px rgba(0,0,0,0.12);
       }
-      /* Name: large, bold, centered, all-caps */
+      /* Header — the ONLY centered section */
       .rv-name {
+        font-size: 26pt;
+        font-weight: 800;
         text-align: center;
-        font-size: 22pt;
-        font-weight: 700;
         letter-spacing: 2px;
         text-transform: uppercase;
-        margin: 0 0 6px 0;
-        color: #000;
+        margin-bottom: 10px;
       }
-      /* Contact row: centered, icon-based */
       .rv-contact {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 6px 24px;
-        font-size: 9pt;
-        color: #444;
-        margin-bottom: 14px;
         text-align: center;
+        font-size: 9.5pt;
+        color: #444;
+        margin-bottom: 20px;
+        line-height: 1.6;
       }
-      .rv-contact-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        white-space: nowrap;
-      }
-      .rv-contact-item .fas {
-        font-size: 8pt;
-        color: #555;
-      }
-      /* Section headers: UPPERCASE + full-width rule underneath */
-      .rv-section {
+      /* Section headers — LEFT aligned */
+      .rv-section-header {
+        text-align: left;
         font-size: 10pt;
         font-weight: 700;
-        text-transform: uppercase;
         letter-spacing: 1.5px;
-        margin: 16px 0 4px 0;
+        text-transform: uppercase;
+        color: #1a1a1a;
+        border-bottom: 1.5px solid #1a1a1a;
         padding-bottom: 3px;
-        border-bottom: 1.5px solid #000;
-        color: #000;
+        margin-top: 20px;
+        margin-bottom: 10px;
       }
-      /* Job header: title bold, date right-aligned */
+      /* Job entry */
+      .rv-job {
+        margin-bottom: 12px;
+      }
       .rv-job-header {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        margin: 8px 0 1px 0;
       }
-      .rv-job-title { font-weight: 700; font-size: 10pt; color: #000; }
-      .rv-job-date  { font-size: 9pt; color: #333; white-space: nowrap; margin-left: 12px; }
-      /* Company name: warm amber accent (#C97A2A) */
-      .rv-company { color: #C97A2A; font-size: 9pt; font-weight: 600; margin: 0 0 4px 0; }
-      /* Bullet points: clean, flush-ish left */
+      .rv-job-title {
+        font-weight: 700;
+        font-size: 10.5pt;
+        color: #1a1a1a;
+        text-align: left;
+      }
+      .rv-job-date {
+        font-size: 9.5pt;
+        color: #555;
+        white-space: nowrap;
+        text-align: right;
+      }
+      .rv-company {
+        font-size: 9.5pt;
+        color: #C97A2A;
+        font-weight: 600;
+        text-align: left;
+        margin-bottom: 5px;
+      }
+      /* Bullet points — proper list */
       .rv-bullets {
-        margin: 3px 0 6px 0;
-        padding-left: 18px;
+        margin: 4px 0;
+        padding-left: 20px;
         list-style-type: disc;
       }
-      .rv-bullets li { margin-bottom: 3px; font-size: 9.5pt; line-height: 1.45; }
-      .rv-text { font-size: 9.5pt; margin: 2px 0; }
-      /* Cert grid */
-      .rv-cert-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; margin-top: 5px; font-size: 9pt; }
-      .rv-cert-row   { display: contents; }
-      .rv-cert-item  { padding: 1px 0; }
-      .rv-cert-item-title { font-weight: 600; }
-      .rv-cert-item-sub   { color: #555; font-size: 8.5pt; }
-      /* Skills */
-      .rv-skills-group       { margin-bottom: 6px; }
-      .rv-skills-label       { font-weight: 600; font-size: 9.5pt; }
-      .rv-skills-cols        { display: inline; font-size: 9pt; }
-      /* Job block spacing */
-      .rv-job-block  { margin-bottom: 6px; }
-      .rv-job-gap    { margin-bottom: 4px; }
-      /* Print button — hidden at print time */
+      .rv-bullets li {
+        font-size: 9.5pt;
+        line-height: 1.5;
+        margin-bottom: 3px;
+        text-align: left;
+        color: #222;
+      }
+      /* Summary text */
+      .rv-summary-text {
+        font-size: 9.5pt;
+        line-height: 1.6;
+        color: #222;
+        text-align: left;
+        margin-bottom: 8px;
+      }
+      /* Skills / certs */
+      .rv-skills-text {
+        font-size: 9.5pt;
+        line-height: 1.7;
+        color: #222;
+        text-align: left;
+      }
+      /* Context bar (hidden at print) */
+      .context-bar {
+        text-align: center;
+        font-size: 10pt;
+        color: #555;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #ddd;
+      }
+      .context-bar .ctx-role { color: #C97A2A; font-weight: 600; }
+      .context-bar .ctx-company { color: #C97A2A; font-weight: 600; }
       .print-btn {
         display: block;
-        margin: 0 auto 24px auto;
+        margin: 0 auto 20px auto;
         padding: 10px 28px;
-        background: #6f42c1;
+        background: #6c47d4;
         color: white;
         border: none;
         border-radius: 6px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        letter-spacing: 0.5px;
-      }
-      .print-btn:hover { background: #5a32a3; }
-      /* Job title label (shown above the resume body) */
-      .job-context-bar {
-        text-align: center;
         font-size: 11pt;
-        color: #555;
-        margin-bottom: 18px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid #e0e0e0;
+        cursor: pointer;
+        font-family: inherit;
       }
-      .job-context-bar strong { color: #C97A2A; }
+      .print-btn:hover { background: #5535b8; }
       @media print {
-        .print-btn, .job-context-bar { display: none !important; }
-        body { background: white; padding: 0; }
-        .rv-wrap { box-shadow: none; padding: 0; }
+        .print-btn, .context-bar { display: none !important; }
+        body { padding: 0; background: white; }
+        .resume-wrap { padding: 20px 28px; box-shadow: none; }
         @page { margin: 0.75in; size: letter; }
       }
       @media (max-width: 600px) {
-        body { padding: 8px; }
-        .rv-wrap { padding: 20px 14px; }
-        .rv-name { font-size: 16pt; }
+        body { padding: 8px 0; }
+        .resume-wrap { padding: 20px 14px; }
+        .rv-name { font-size: 18pt; }
         .rv-job-header { flex-direction: column; }
-        .rv-job-date { margin-left: 0; font-size: 8.5pt; }
+        .rv-job-date { text-align: left; font-size: 8.5pt; }
       }`;
 
-    // Font Awesome CDN for the contact icons
-    const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
-
     const jobContextBar = `
-      <div class="job-context-bar">
-        Tailored resume for: <strong>${escapeHtml(job.title || '')}</strong> at <strong>${escapeHtml(job.company || '')}</strong>
+      <div class="context-bar">
+        Tailored resume for: <span class="ctx-role">${escapeHtml(job.title || '')}</span> at <span class="ctx-company">${escapeHtml(job.company || '')}</span>
       </div>`;
 
     const newTab = window.open('', '_blank');
@@ -8282,7 +8508,6 @@ Start with: Dear Hiring Team,`;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tailored Resume — ${escapeHtml(job.title || 'Resume')} | ${escapeHtml(job.company || '')}</title>
-  ${faLink}
   <style>${css}</style>
 </head>
 <body>
@@ -8341,8 +8566,8 @@ Start with: Dear Hiring Team,`;
       *, *::before, *::after { box-sizing: border-box; }
       body {
         font-family: 'Segoe UI', 'Inter', Roboto, system-ui, sans-serif;
-        font-size: 11pt;
-        line-height: 1.6;
+        font-size: 10pt;
+        line-height: 1.5;
         color: #1a1a1a;
         background: #f5f5f5;
         margin: 0;
@@ -8352,61 +8577,61 @@ Start with: Dear Hiring Team,`;
         max-width: 680px;
         margin: 0 auto;
         background: white;
-        padding: 48px 52px;
+        padding: 36px 42px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.12);
       }
       /* Header: name + contact */
       .cl-author-name {
-        font-size: 18pt;
+        font-size: 13pt;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 1.5px;
         color: #000;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
         text-align: left;
       }
       .cl-author-contact {
-        font-size: 9pt;
+        font-size: 8.5pt;
         color: #555;
-        margin-bottom: 18px;
-        padding-bottom: 14px;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
         border-bottom: 1.5px solid #000;
         text-align: left;
       }
       /* Date + job reference */
       .cl-date {
-        font-size: 10pt;
+        font-size: 9pt;
         color: #333;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
       }
       .cl-job-ref {
-        font-size: 9.5pt;
+        font-size: 8.5pt;
         color: #555;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         font-style: italic;
       }
       .cl-divider {
         border: none;
         border-bottom: 1px solid #ccc;
-        margin-bottom: 18px;
-      }
-      /* Body paragraphs */
-      .cl-para {
-        font-size: 10.5pt;
-        line-height: 1.65;
         margin-bottom: 14px;
+      }
+      /* Body paragraphs — reduced to fit one printed page */
+      .cl-para {
+        font-size: 9.5pt;
+        line-height: 1.5;
+        margin-bottom: 10px;
         color: #000;
       }
       /* Print button */
       .print-btn {
         display: block;
-        margin: 0 auto 24px auto;
-        padding: 10px 28px;
+        margin: 0 auto 20px auto;
+        padding: 8px 24px;
         background: #6f42c1;
         color: white;
         border: none;
         border-radius: 6px;
-        font-size: 13px;
+        font-size: 11px;
         font-weight: 600;
         cursor: pointer;
         letter-spacing: 0.5px;
@@ -8415,13 +8640,13 @@ Start with: Dear Hiring Team,`;
       @media print {
         .print-btn { display: none !important; }
         body { background: white; padding: 0; }
-        .cl-wrap { box-shadow: none; padding: 0; }
+        .cl-wrap { box-shadow: none; padding: 20px 28px; }
         @page { margin: 0.75in; size: letter; }
       }
       @media (max-width: 600px) {
         body { padding: 8px; }
-        .cl-wrap { padding: 20px 14px; }
-        .cl-author-name { font-size: 14pt; }
+        .cl-wrap { padding: 16px 12px; }
+        .cl-author-name { font-size: 11pt; }
       }`;
 
     const newTab = window.open('', '_blank');
