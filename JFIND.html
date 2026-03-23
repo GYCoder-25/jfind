@@ -516,6 +516,16 @@
 
     }
 
+    /* Cover letter output uses rendered HTML paragraphs — no height cap */
+
+    #coverLetterOutputArea {
+
+      max-height: none;
+
+      overflow-y: visible;
+
+    }
+
     .tailor-section { height: 100%; }
 
 
@@ -2431,7 +2441,8 @@
 
   let PRINT_MODE = null; // 'resume' or 'cover'
 
-  let CURRENT_COVER_LETTER_TEXT = null; // stores last generated cover letter
+  let CURRENT_COVER_LETTER_TEXT = null;  // stores last generated cover letter
+  let CURRENT_TAILORED_RESUME_TEXT = null; // stores last tailored resume (plain text, markdown stripped)
 
   let SAVED_JOBS = [];
 
@@ -6811,7 +6822,7 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
       const actionsEl = document.getElementById('coverLetterActions');
 
-      if (outputEl) outputEl.innerHTML = `<pre class="tailor-pre">${escapeHtml(job.coverLetter)}</pre>`;
+      if (outputEl) outputEl.innerHTML = renderCoverLetterHtml(job.coverLetter);
 
       if (actionsEl) actionsEl.style.display = 'flex';
 
@@ -6846,6 +6857,7 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
     document.getElementById('tailorErrorMsg').style.display = 'none';
 
     // Reset cover letter section (prevents stale letter from previous job showing)
+    CURRENT_TAILORED_RESUME_TEXT = null;
     CURRENT_COVER_LETTER_TEXT = null;
     const clOutput = document.getElementById('coverLetterOutputArea');
     if (clOutput) clOutput.innerHTML = '<div class="empty-state" style="padding:24px 20px;"><i class="fas fa-envelope-open-text d-block mb-2"></i><p style="font-size:13px;">Cover letter will appear here after generation.</p></div>';
@@ -6966,7 +6978,7 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
   async function generateTailoredResume(jobTitle, company, jobDescription) {
 
-    const prompt = `You are a professional resume writer helping a job applicant tailor their resume.
+    const prompt = `You are a professional resume writer helping a job applicant tailor their resume. Do not use any markdown formatting. Do not use **bold**, *italic*, or any other markdown syntax. Output plain text only.
 
 
 
@@ -7052,23 +7064,28 @@ Return the full tailored resume now:`;
 
 
 
+  function stripMarkdown(text) {
+    if (!text) return '';
+    // Remove [CHANGED] highlight tags and **bold**/*italic* markdown markers
+    return text
+      .replace(/\[CHANGED\]|\[\/CHANGED\]/g, '')  // strip [CHANGED] tags
+      .replace(/\*\*([^*]+)\*\*/g, '$1')           // **bold** → plain
+      .replace(/\*([^*]+)\*/g, '$1')               // *italic* → plain
+      .replace(/_{2}([^_]+)_{2}/g, '$1')           // __bold__ → plain
+      .replace(/_([^_]+)_/g, '$1');                // _italic_ → plain
+  }
+
+
+
   function renderTailoredOutput(text) {
 
-    // Escape HTML first, then apply [CHANGED] highlighting
+    text = stripMarkdown(text);
 
-    const escaped = escapeHtml(text);
+    // Store clean text for copy/PDF functions
+    CURRENT_TAILORED_RESUME_TEXT = text;
 
-    const html = escaped.replace(
-
-      /\[CHANGED\]([\s\S]*?)\[\/CHANGED\]/g,
-
-      '<span class="changed-highlight">$1</span>'
-
-    );
-
-    document.getElementById('tailorOutputArea').innerHTML =
-
-      `<pre class="tailor-pre">${html}</pre>`;
+    // Render as structured resume HTML (same quality as PDF preview)
+    document.getElementById('tailorOutputArea').innerHTML = renderResumeHtml(text);
 
   }
 
@@ -7076,15 +7093,9 @@ Return the full tailored resume now:`;
 
   function copyTailoredResume() {
 
-    const pre = document.querySelector('.tailor-pre');
+    if (!CURRENT_TAILORED_RESUME_TEXT) return;
 
-    if (!pre) return;
-
-    const cleanText = pre.innerText
-
-      .replace(/\[CHANGED\]/g, '')
-
-      .replace(/\[\/CHANGED\]/g, '');
+    const cleanText = CURRENT_TAILORED_RESUME_TEXT;
 
 
 
@@ -7203,15 +7214,8 @@ Return the full tailored resume now:`;
   function getCleanResumeText() {
 
     // Priority: tailored output if on tailor tab and output exists
-
-    const pre = document.querySelector('#tailorOutputArea .tailor-pre');
-
-    if (pre) {
-
-      // Strip [CHANGED] tags, return clean text
-
-      return pre.innerText.replace(/\[CHANGED\]/g, '').replace(/\[\/CHANGED\]/g, '').trim();
-
+    if (CURRENT_TAILORED_RESUME_TEXT) {
+      return CURRENT_TAILORED_RESUME_TEXT.trim();
     }
 
     // Fallback: master resume
@@ -7674,7 +7678,7 @@ Start with: Dear Hiring Team,`;
 
             contents: [{ parts: [{ text: prompt }] }],
 
-            generationConfig: { temperature: 0.35, maxOutputTokens: 1024 }
+            generationConfig: { temperature: 0.35, maxOutputTokens: 2048 }
 
           })
 
@@ -7710,7 +7714,7 @@ Start with: Dear Hiring Team,`;
 
       if (outputEl) {
 
-        outputEl.innerHTML = `<pre class="tailor-pre">${escapeHtml(CURRENT_COVER_LETTER_TEXT)}</pre>`;
+        outputEl.innerHTML = renderCoverLetterHtml(CURRENT_COVER_LETTER_TEXT);
 
       }
 
