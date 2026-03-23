@@ -1429,6 +1429,55 @@
       }
     }
 
+    /* ===== DOWNLOAD TAB ===== */
+
+    .dl-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .dl-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+
+    .dl-card-company {
+      font-size: 13px;
+      font-weight: 600;
+      color: #C97A2A; /* warm amber accent — matches FIOS brand */
+      margin-bottom: 6px;
+    }
+
+    .dl-card-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dl-card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .dl-no-resume-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
     /* ===== COVER LETTER PDF RENDERER STYLES ===== */
     .cl-date {
       font-size: 10pt;
@@ -1513,11 +1562,6 @@
 
     </button>
 
-    <button class="tab-btn" onclick="showTab('tailor')" id="dt-tailor">
-
-      <i class="fas fa-magic me-1"></i> Tailor
-
-    </button>
 
     <button class="tab-btn" onclick="showTab('resume')" id="dt-resume">
 
@@ -1528,6 +1572,12 @@
     <button class="tab-btn" onclick="showTab('settings')" id="dt-settings">
 
       <i class="fas fa-cog me-1"></i> Settings
+
+    </button>
+
+    <button class="tab-btn" onclick="showTab('download')" id="dt-download">
+
+      <i class="fas fa-download me-1"></i> Download
 
     </button>
 
@@ -1689,182 +1739,7 @@
 
 
 
-    <!-- ==================== TAB 3: TAILOR RESUME ==================== -->
-
-    <div id="tab-tailor" class="tab-pane">
-
-      <div class="tab-section" style="max-width:1000px;">
-
-        <div class="section-title">Tailor Resume</div>
-
-        <div class="section-subtitle">Paste a job description and let Gemini rewrite your bullets to match.</div>
-
-
-
-        <div class="row g-2 mb-3">
-
-          <div class="col-sm-6">
-
-            <label class="form-label fw-semibold small">Job Title</label>
-
-            <input type="text" id="tailorJobTitle" class="form-control" placeholder="e.g. Operations Manager">
-
-          </div>
-
-          <div class="col-sm-6">
-
-            <label class="form-label fw-semibold small">Company</label>
-
-            <input type="text" id="tailorCompany" class="form-control" placeholder="e.g. Acme Corp">
-
-          </div>
-
-        </div>
-
-
-
-        <div class="tailor-two-panel">
-
-          <div class="tailor-left">
-
-            <label class="form-label fw-semibold small">Job Description</label>
-
-            <textarea id="tailorJD" class="form-control"
-
-                      style="height:400px;font-size:13px;font-family:'Courier New',monospace;resize:vertical;"
-
-                      placeholder="Paste the full job description here..."></textarea>
-
-          </div>
-
-          <div class="tailor-right">
-
-            <div class="tailor-output-header">
-
-              <label class="form-label fw-semibold small mb-0">Tailored Resume</label>
-
-              <div style="display:flex;gap:6px;flex-wrap:wrap;" id="tailorOutputActions">
-
-                <button class="btn btn-sm btn-outline-custom" onclick="copyTailoredResume()" id="copyTailoredBtn" style="display:none;">
-
-                  <i class="fas fa-copy me-1"></i>Copy
-
-                </button>
-
-                <button class="btn btn-sm btn-outline-secondary" onclick="downloadResumeAsPdf()" id="downloadResumePdfBtn" style="display:none;">
-
-                  <i class="fas fa-file-pdf me-1"></i>Download PDF
-
-                </button>
-
-                <button class="btn btn-sm" onclick="saveTailoredAndApply()" id="markAppliedBtn"
-
-                        style="display:none;background:#198754;color:white;border:none;">
-
-                  <i class="fas fa-check me-1"></i>Mark Applied
-
-                </button>
-
-              </div>
-
-            </div>
-
-            <div id="tailorOutputArea" style="min-height:400px;">
-
-              <div class="empty-state" style="padding:40px 20px;">
-
-                <i class="fas fa-magic d-block mb-2"></i>
-
-                <p style="font-size:13px;">Tailored resume will appear here.</p>
-
-              </div>
-
-            </div>
-
-            <div id="tailorApplyLink" style="display:none;" class="apply-link-section mt-2">
-
-              <div class="fw-semibold small mb-1" style="color:#065f46;">
-
-                <i class="fas fa-external-link-alt me-1"></i>Apply Now
-
-              </div>
-
-              <a id="applyLinkAnchor" href="#" target="_blank" class="btn btn-sm btn-success">
-
-                Open Application →
-
-              </a>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-
-        <button class="btn btn-primary-custom tailor-generate-btn mt-3" onclick="runTailor()" id="tailorBtn">
-
-          <i class="fas fa-magic me-2"></i>Generate Tailored Resume
-
-        </button>
-
-        <div id="tailorLoadingMsg" style="display:none;text-align:center;padding:8px 0;color:var(--muted);font-size:13px;">
-
-          <span class="spinner-border spinner-border-sm me-2" style="color:var(--primary);"></span>
-
-          Gemini is rewriting your bullets...
-
-        </div>
-
-        <div id="tailorErrorMsg" style="display:none;" class="alert alert-danger mt-2 small"></div>
-
-        <!-- ===== COVER LETTER SECTION ===== -->
-        <div id="coverLetterSection" class="mt-4 pt-3" style="border-top: 1px solid var(--border);">
-
-          <div class="tailor-output-header mb-2">
-            <div>
-              <label class="form-label fw-semibold small mb-0">Cover Letter</label>
-              <div class="text-muted" style="font-size:12px;">Gemini generates a tailored 3-paragraph letter (≤200 words)</div>
-            </div>
-            <div style="display:none;" id="coverLetterActions">
-              <button class="btn btn-sm btn-outline-custom" onclick="copyCoverLetter()">
-                <i class="fas fa-copy me-1"></i>Copy
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="downloadCoverLetterAsPdf()">
-                <i class="fas fa-file-pdf me-1"></i>Download PDF
-              </button>
-            </div>
-          </div>
-
-          <div id="coverLetterOutputArea" style="min-height:120px;">
-            <div class="empty-state" style="padding:24px 20px;">
-              <i class="fas fa-envelope-open-text d-block mb-2"></i>
-              <p style="font-size:13px;">Cover letter will appear here after generation.</p>
-            </div>
-          </div>
-
-          <div id="coverLetterLoading" style="display:none;text-align:center;padding:8px 0;color:var(--muted);font-size:13px;">
-            <span class="spinner-border spinner-border-sm me-2" style="color:var(--primary);"></span>
-            Gemini is writing your cover letter...
-          </div>
-
-          <div id="coverLetterErrorMsg" style="display:none;" class="alert alert-danger mt-2 small"></div>
-
-          <button class="btn btn-outline-custom mt-2" onclick="generateCoverLetter()" id="coverLetterBtn"
-                  style="width:100%;justify-content:center;">
-            <i class="fas fa-envelope me-2"></i>Generate Cover Letter
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-
-    <!-- ==================== TAB 4: RESUME ==================== -->
+        <!-- ==================== TAB 4: RESUME ==================== -->
 
     <div id="tab-resume" class="tab-pane">
 
@@ -2250,6 +2125,34 @@
 
 
 
+    <!-- ==================== TAB: DOWNLOAD ==================== -->
+
+    <div id="tab-download" class="tab-pane">
+
+      <div class="tab-section">
+
+        <div class="section-title">Tailored Resumes &amp; Cover Letters</div>
+
+        <div class="section-subtitle">Download job-specific resumes and cover letters for your saved applications.</div>
+
+        <div id="downloadJobsList">
+
+          <!-- Populated by renderDownloadTab() -->
+
+          <div class="empty-state">
+
+            <i class="fas fa-download d-block mb-2"></i>
+
+            <p>No tailored resumes yet. Save a job and generate a tailored resume to get started.</p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
   </div><!-- end mainContent -->
 
 
@@ -2274,13 +2177,6 @@
 
     </button>
 
-    <button class="tab-btn-mobile" onclick="showTab('tailor')" id="mt-tailor">
-
-      <i class="fas fa-magic"></i>
-
-      <span>Tailor</span>
-
-    </button>
 
     <button class="tab-btn-mobile" onclick="showTab('resume')" id="mt-resume">
 
@@ -2295,6 +2191,14 @@
       <i class="fas fa-cog"></i>
 
       <span>Settings</span>
+
+    </button>
+
+    <button class="tab-btn-mobile" onclick="showTab('download')" id="mt-download">
+
+      <i class="fas fa-download"></i>
+
+      <span>Download</span>
 
     </button>
 
@@ -2432,9 +2336,9 @@
             </button>
 
             <button class="btn btn-primary-custom"
-                    onclick="modalTailor()"
+                    onclick="modalDownload()"
                     style="flex:1;min-height:44px;font-size:14px;white-space:nowrap;">
-              <i class="fas fa-magic me-1"></i>Tailor →
+              <i class="fas fa-download me-1"></i>Download →
             </button>
 
             <a id="modalApplyBtn" href="#" target="_blank"
@@ -3129,6 +3033,8 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
     // Tab-specific on-show logic
 
     if (tabName === 'saved') renderSavedJobs();
+
+    if (tabName === 'download') renderDownloadTab();
 
 
 
@@ -4020,9 +3926,9 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
 
           </button>
 
-          <button class="btn btn-sm btn-primary-custom" onclick="tailorByIdx(${cacheIdx})">
+          <button class="btn btn-sm btn-primary-custom" onclick="saveJobByIdx(${cacheIdx}); showTab('download');" title="Save job and go to Download tab">
 
-            <i class="fas fa-magic me-1"></i>Tailor Resume →
+            <i class="fas fa-download me-1"></i>Save &amp; Download
 
           </button>
 
@@ -6095,6 +6001,13 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
   function tailorByIdx(cacheIdx) {
 
+    const titleEl = document.getElementById('tailorJobTitle');
+    if (!titleEl) {
+      showToast('Use the Download tab to access tailored resumes.', 'info');
+      showTab('download');
+      return;
+    }
+
     const job = SEARCH_RESULTS_CACHE[cacheIdx];
 
     if (!job) { showToast('Job data not found', 'danger'); return; }
@@ -6704,10 +6617,16 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
             <span class="saved-action-label">View</span>
           </button>
 
-          <button class="btn btn-sm btn-outline-custom saved-action-btn" onclick="tailorFromSaved('${job.id}')" title="Tailor Resume">
-            <i class="fas fa-magic"></i>
-            <span class="saved-action-label">Tailor</span>
-          </button>
+          ${job.tailoredResume
+            ? `<button class="btn btn-sm btn-primary-custom saved-action-btn" onclick="showTab('download')" title="Download Tailored Resume">
+                <i class="fas fa-download"></i>
+                <span class="saved-action-label">Download</span>
+               </button>`
+            : `<button class="btn btn-sm btn-outline-secondary saved-action-btn" disabled title="No tailored resume yet" style="opacity:0.5;cursor:default;">
+                <i class="fas fa-file-alt"></i>
+                <span class="saved-action-label">No Resume</span>
+               </button>`
+          }
 
           ${job.applyLink ? `
             <button class="btn btn-sm saved-action-btn" onclick="applyToJob('${job.id}')"
@@ -6802,6 +6721,13 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
   // ============================================================
 
   function tailorFromSaved(jobId) {
+
+    const titleEl = document.getElementById('tailorJobTitle');
+    if (!titleEl) {
+      showToast('Use the Download tab to access tailored resumes.', 'info');
+      showTab('download');
+      return;
+    }
 
     const job = SAVED_JOBS.find(j => j.id === jobId);
 
@@ -8075,6 +8001,481 @@ Start with: Dear Hiring Team,`;
 
 
 
+
+
+
+  // ============================================================
+
+  //  DOWNLOAD TAB
+
+  // ============================================================
+
+  /**
+   * Renders the Download tab panel.
+   * Called by showTab('download') each time the tab is activated.
+   * Iterates SAVED_JOBS and builds a card for each job.
+   * Jobs with a tailoredResume get Download Resume / Download Cover Letter buttons.
+   * Jobs without a tailoredResume get a muted "No resume yet" label.
+   */
+  function renderDownloadTab() {
+
+    const container = document.getElementById('downloadJobsList');
+
+    if (!container) return;
+
+    if (!SAVED_JOBS || SAVED_JOBS.length === 0) {
+
+      container.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-download d-block mb-2"></i>
+          <p>No saved jobs yet. Save and tailor a job from the Search tab to get started.</p>
+        </div>`;
+
+      return;
+
+    }
+
+    const html = SAVED_JOBS.map(job => buildDownloadCard(job)).join('');
+
+    container.innerHTML = html || `
+      <div class="empty-state">
+        <i class="fas fa-download d-block mb-2"></i>
+        <p>No tailored resumes yet. Generate a tailored resume from a saved job to download here.</p>
+      </div>`;
+
+  }
+
+
+
+  /**
+   * Builds the HTML for one Download tab card.
+   * @param {object} job - A saved job object from SAVED_JOBS.
+   * @returns {string} HTML string for the card.
+   */
+  function buildDownloadCard(job) {
+
+    const statusLabel = job.status
+      ? job.status.charAt(0).toUpperCase() + job.status.slice(1)
+      : 'Saved';
+
+    const salaryHtml = job.salary
+      ? `<span class="job-card-salary">${escapeHtml(job.salary)}</span>`
+      : '';
+
+    const statusHtml = `<span class="status-badge status-${escapeHtml(job.status || 'saved')}">${escapeHtml(statusLabel)}</span>`;
+
+    // Buttons section — only shown when tailoredResume exists
+    let actionsHtml;
+
+    if (job.tailoredResume) {
+
+      const coverLetterBtn = job.coverLetter
+        ? `<button class="btn btn-sm btn-outline-custom" onclick="openCoverLetterInNewTab('${escapeHtml(job.id)}')" title="Open cover letter in new tab for printing">
+             <i class="fas fa-envelope me-1"></i>Cover Letter
+           </button>`
+        : '';
+
+      actionsHtml = `
+        <div class="dl-card-actions">
+          <button class="btn btn-sm btn-primary-custom" onclick="openResumeInNewTab('${escapeHtml(job.id)}')" title="Open tailored resume in new tab for printing">
+            <i class="fas fa-file-alt me-1"></i>Download Resume
+          </button>
+          ${coverLetterBtn}
+        </div>`;
+
+    } else {
+
+      actionsHtml = `
+        <div class="dl-card-actions">
+          <span class="dl-no-resume-label"><i class="fas fa-clock me-1"></i>No resume yet — generate one from the Saved tab.</span>
+        </div>`;
+
+    }
+
+    return `
+      <div class="dl-card">
+        <div class="dl-card-title">${escapeHtml(job.title || 'Untitled Role')}</div>
+        <div class="dl-card-company">${escapeHtml(job.company || '')}</div>
+        <div class="dl-card-meta">
+          ${salaryHtml}
+          ${statusHtml}
+          ${job.location ? `<span><i class="fas fa-map-marker-alt me-1" style="color:var(--muted);"></i>${escapeHtml(job.location)}</span>` : ''}
+        </div>
+        ${actionsHtml}
+      </div>`;
+
+  }
+
+
+
+  /**
+   * Opens a new browser tab with a professionally rendered resume
+   * for the saved job identified by jobId.
+   * The resume text is taken from job.tailoredResume (plain text stored in JSON).
+   * @param {string} jobId - The saved job's id field.
+   */
+  function openResumeInNewTab(jobId) {
+
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+
+    if (!job || !job.tailoredResume) {
+      showToast('Resume not found for this job', 'warning');
+      return;
+    }
+
+    const text = job.tailoredResume;
+
+    // Use the existing renderResumeHtml() to produce structured HTML
+    const resumeBodyHtml = renderResumeHtml(text);
+
+    // Full CSS for the standalone new-tab page — mirrors downloadResumeAsPdf() styles
+    // plus adds the warm amber company color from the design spec
+    const css = `
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        font-family: 'Segoe UI', 'Inter', Roboto, system-ui, sans-serif;
+        font-size: 10.5pt;
+        line-height: 1.5;
+        color: #1a1a1a;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+      }
+      .rv-wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px 48px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      }
+      /* Name: large, bold, centered, all-caps */
+      .rv-name {
+        text-align: center;
+        font-size: 22pt;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin: 0 0 6px 0;
+        color: #000;
+      }
+      /* Contact row: centered, icon-based */
+      .rv-contact {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px 24px;
+        font-size: 9pt;
+        color: #444;
+        margin-bottom: 14px;
+        text-align: center;
+      }
+      .rv-contact-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .rv-contact-item .fas {
+        font-size: 8pt;
+        color: #555;
+      }
+      /* Section headers: UPPERCASE + full-width rule underneath */
+      .rv-section {
+        font-size: 10pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin: 16px 0 4px 0;
+        padding-bottom: 3px;
+        border-bottom: 1.5px solid #000;
+        color: #000;
+      }
+      /* Job header: title bold, date right-aligned */
+      .rv-job-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin: 8px 0 1px 0;
+      }
+      .rv-job-title { font-weight: 700; font-size: 10pt; color: #000; }
+      .rv-job-date  { font-size: 9pt; color: #333; white-space: nowrap; margin-left: 12px; }
+      /* Company name: warm amber accent (#C97A2A) */
+      .rv-company { color: #C97A2A; font-size: 9pt; font-weight: 600; margin: 0 0 4px 0; }
+      /* Bullet points: clean, flush-ish left */
+      .rv-bullets {
+        margin: 3px 0 6px 0;
+        padding-left: 18px;
+        list-style-type: disc;
+      }
+      .rv-bullets li { margin-bottom: 3px; font-size: 9.5pt; line-height: 1.45; }
+      .rv-text { font-size: 9.5pt; margin: 2px 0; }
+      /* Cert grid */
+      .rv-cert-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; margin-top: 5px; font-size: 9pt; }
+      .rv-cert-row   { display: contents; }
+      .rv-cert-item  { padding: 1px 0; }
+      .rv-cert-item-title { font-weight: 600; }
+      .rv-cert-item-sub   { color: #555; font-size: 8.5pt; }
+      /* Skills */
+      .rv-skills-group       { margin-bottom: 6px; }
+      .rv-skills-label       { font-weight: 600; font-size: 9.5pt; }
+      .rv-skills-cols        { display: inline; font-size: 9pt; }
+      /* Job block spacing */
+      .rv-job-block  { margin-bottom: 6px; }
+      .rv-job-gap    { margin-bottom: 4px; }
+      /* Print button — hidden at print time */
+      .print-btn {
+        display: block;
+        margin: 0 auto 24px auto;
+        padding: 10px 28px;
+        background: #6f42c1;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+      }
+      .print-btn:hover { background: #5a32a3; }
+      /* Job title label (shown above the resume body) */
+      .job-context-bar {
+        text-align: center;
+        font-size: 11pt;
+        color: #555;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .job-context-bar strong { color: #C97A2A; }
+      @media print {
+        .print-btn, .job-context-bar { display: none !important; }
+        body { background: white; padding: 0; }
+        .rv-wrap { box-shadow: none; padding: 0; }
+        @page { margin: 0.75in; size: letter; }
+      }
+      @media (max-width: 600px) {
+        body { padding: 8px; }
+        .rv-wrap { padding: 20px 14px; }
+        .rv-name { font-size: 16pt; }
+        .rv-job-header { flex-direction: column; }
+        .rv-job-date { margin-left: 0; font-size: 8.5pt; }
+      }`;
+
+    // Font Awesome CDN for the contact icons
+    const faLink = '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+
+    const jobContextBar = `
+      <div class="job-context-bar">
+        Tailored resume for: <strong>${escapeHtml(job.title || '')}</strong> at <strong>${escapeHtml(job.company || '')}</strong>
+      </div>`;
+
+    const newTab = window.open('', '_blank');
+
+    if (!newTab) {
+      showToast('Popup blocked — please allow popups for this page', 'warning');
+      return;
+    }
+
+    newTab.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tailored Resume — ${escapeHtml(job.title || 'Resume')} | ${escapeHtml(job.company || '')}</title>
+  ${faLink}
+  <style>${css}</style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  ${jobContextBar}
+  ${resumeBodyHtml}
+</body>
+</html>`);
+
+    newTab.document.close();
+
+  }
+
+
+
+  /**
+   * Opens a new browser tab with a clean, printable cover letter
+   * for the saved job identified by jobId.
+   * @param {string} jobId - The saved job's id field.
+   */
+  function openCoverLetterInNewTab(jobId) {
+
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+
+    if (!job || !job.coverLetter) {
+      showToast('Cover letter not found for this job', 'warning');
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Parse contact info from the job's tailoredResume header if available,
+    // otherwise fall back to known defaults.
+    let contactLine = 'angelo@riocreations.net | (909) 847-2664 | linkedin.com/in/angelomoya';
+
+    let authorName = 'Angelo Moya';
+
+    if (job.tailoredResume) {
+
+      const resumeLines = job.tailoredResume.split('\n').filter(l => l.trim());
+
+      if (resumeLines.length > 0) authorName = resumeLines[0].trim();
+
+      if (resumeLines.length > 1) contactLine = resumeLines[1].trim();
+
+    }
+
+    // Split cover letter into paragraphs for clean rendering
+    const paragraphs = job.coverLetter.split(/\n\n+/).filter(p => p.trim());
+
+    const paraHtml = paragraphs
+      .map(p => `<p class="cl-para">${escapeHtml(p.trim()).replace(/\n/g, '<br>')}</p>`)
+      .join('');
+
+    const css = `
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        font-family: 'Segoe UI', 'Inter', Roboto, system-ui, sans-serif;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #1a1a1a;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 20px;
+      }
+      .cl-wrap {
+        max-width: 680px;
+        margin: 0 auto;
+        background: white;
+        padding: 48px 52px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      }
+      /* Header: name + contact */
+      .cl-author-name {
+        font-size: 18pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #000;
+        margin-bottom: 4px;
+        text-align: left;
+      }
+      .cl-author-contact {
+        font-size: 9pt;
+        color: #555;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1.5px solid #000;
+        text-align: left;
+      }
+      /* Date + job reference */
+      .cl-date {
+        font-size: 10pt;
+        color: #333;
+        margin-bottom: 14px;
+      }
+      .cl-job-ref {
+        font-size: 9.5pt;
+        color: #555;
+        margin-bottom: 8px;
+        font-style: italic;
+      }
+      .cl-divider {
+        border: none;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 18px;
+      }
+      /* Body paragraphs */
+      .cl-para {
+        font-size: 10.5pt;
+        line-height: 1.65;
+        margin-bottom: 14px;
+        color: #000;
+      }
+      /* Print button */
+      .print-btn {
+        display: block;
+        margin: 0 auto 24px auto;
+        padding: 10px 28px;
+        background: #6f42c1;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+      }
+      .print-btn:hover { background: #5a32a3; }
+      @media print {
+        .print-btn { display: none !important; }
+        body { background: white; padding: 0; }
+        .cl-wrap { box-shadow: none; padding: 0; }
+        @page { margin: 0.75in; size: letter; }
+      }
+      @media (max-width: 600px) {
+        body { padding: 8px; }
+        .cl-wrap { padding: 20px 14px; }
+        .cl-author-name { font-size: 14pt; }
+      }`;
+
+    const newTab = window.open('', '_blank');
+
+    if (!newTab) {
+      showToast('Popup blocked — please allow popups for this page', 'warning');
+      return;
+    }
+
+    newTab.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cover Letter — ${escapeHtml(job.title || 'Position')} | ${escapeHtml(job.company || '')}</title>
+  <style>${css}</style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  <div class="cl-wrap">
+    <div class="cl-author-name">${escapeHtml(authorName)}</div>
+    <div class="cl-author-contact">${escapeHtml(contactLine)}</div>
+    <div class="cl-date">${today}</div>
+    <div class="cl-job-ref">${escapeHtml(job.title || 'Position')} — ${escapeHtml(job.company || '')}</div>
+    <div class="cl-divider"></div>
+    ${paraHtml}
+  </div>
+</body>
+</html>`);
+
+    newTab.document.close();
+
+  }
+
+
+
+  /**
+   * modalDownload() — called by the modal footer "Download →" button.
+   * If the modal is showing a saved job that has a tailoredResume,
+   * closes the modal and navigates to the Download tab.
+   * Otherwise closes the modal and navigates to the Download tab
+   * so the user can see all available downloads.
+   */
+  function modalDownload() {
+
+    const modalEl = document.getElementById('jobDetailModal');
+
+    const modal = bootstrap.Modal.getInstance(modalEl);
+
+    if (modal) modal.hide();
+
+    showTab('download');
+
+  }
 
 
 
