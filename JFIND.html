@@ -4074,6 +4074,9 @@ Seeking full-time Project Manager or Operations Leadership role.
 
   let _editFieldType = null;   // 'tailoredResume' or 'coverLetter'
 
+  // Deep Analysis paste panel state — tracks which saved job the paste panel is showing for
+  let _deepAnalysisJobId = null;
+
 
 
   function openJobDetail(cacheIdx) {
@@ -5731,51 +5734,201 @@ MATCH SCORE: [X/10]
 
 
 
-  async function runDeepAnalysis(job, jobId) {
+  // ============================================================
+  //  DEEP ANALYSIS — ENTRY POINT
+  //  Checks if fullDescription is saved → run immediately (with note)
+  //  Otherwise → show paste panel
+  // ============================================================
+
+  function runDeepAnalysis(job, jobId) {
 
     const deepOutput = document.getElementById('modalDeepOutput');
-
+    const deepBtn = document.getElementById('modalDeepAnalysisBtn');
     const deepSpinner = document.getElementById('modalDeepSpinner');
 
-    const deepBtn = document.getElementById('modalDeepAnalysisBtn');
-
-
-
     if (deepBtn) deepBtn.style.display = 'none';
+    if (deepSpinner) deepSpinner.style.display = 'none';
+    if (deepOutput) deepOutput.innerHTML = '';
+
+    // Track which job this panel is for (needed by runDeepAnalysisWithPaste / runDeepAnalysisSkipPaste)
+    _deepAnalysisJobId = jobId || null;
+
+    // If a fullDescription was already pasted and saved, use it immediately
+    const savedFullJD = (job.fullDescription || '').trim();
+    if (savedFullJD) {
+      // Build the "using saved full JD" note — will be prepended above results
+      const safeJobId = jobId ? escapeHtml(jobId) : '';
+      const noteHtml = `<div style="font-size:11px;color:#6c757d;margin-bottom:8px;padding:6px 10px;background:#f0f0f0;border-radius:4px;">
+        📋 Using saved full JD (${savedFullJD.length.toLocaleString()} chars).
+        ${safeJobId ? `<a href="#" onclick="clearFullJdAndShowPaste('${safeJobId}'); return false;" style="color:#6f42c1;">Replace</a>` : ''}
+      </div>`;
+      _executeDeepAnalysis(job, jobId, savedFullJD, noteHtml);
+      return;
+    }
+
+    // No saved fullDescription — show paste panel
+    showDeepJdPastePanel(job, jobId);
+  }
+
+
+  // ============================================================
+  //  DEEP ANALYSIS — PASTE PANEL
+  // ============================================================
+
+  function showDeepJdPastePanel(job, jobId) {
+    const deepOutput = document.getElementById('modalDeepOutput');
+    const deepBtn = document.getElementById('modalDeepAnalysisBtn');
+    if (deepBtn) deepBtn.style.display = 'none';
+
+    // Remember context for the two button handlers
+    _deepAnalysisJobId = jobId || null;
+
+    if (deepOutput) {
+      deepOutput.innerHTML = `<div id="deepJdPastePanel" style="padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+  <p style="font-size:13px;color:#495057;margin-bottom:8px;">
+    <strong>📋 Paste the full job description</strong> for a complete Deep Analysis.<br>
+    <span style="font-size:12px;color:#6c757d;">Copy it directly from the job posting for best results.</span>
+  </p>
+  <textarea id="deepJdPasteArea" rows="12" placeholder="Paste the full job description here..."
+    style="width:100%;font-size:12px;font-family:monospace;border:1px solid #ced4da;border-radius:4px;padding:8px;resize:vertical;"></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <button onclick="runDeepAnalysisWithPaste()" class="btn btn-sm btn-primary" style="background:#6f42c1;border-color:#6f42c1;">
+      <i class="fas fa-microscope me-1"></i>Run Deep Analysis
+    </button>
+    <button onclick="runDeepAnalysisSkipPaste()" class="btn btn-sm btn-outline-secondary">
+      Skip — Use Saved JD
+    </button>
+  </div>
+</div>`;
+    }
+  }
+
+
+  // ============================================================
+  //  DEEP ANALYSIS — "RUN DEEP ANALYSIS" (paste path)
+  // ============================================================
+
+  async function runDeepAnalysisWithPaste() {
+    const textarea = document.getElementById('deepJdPasteArea');
+    const pastedText = textarea ? textarea.value.trim() : '';
+
+    if (!pastedText) {
+      showToast('Please paste the job description first', 'warning');
+      return;
+    }
+
+    // Resolve job object from module-level state
+    let job = null;
+    let jobId = _deepAnalysisJobId;
+
+    if (jobId) {
+      job = SAVED_JOBS.find(j => j.id === jobId);
+    } else if (MODAL_CURRENT_JOB_IDX !== null) {
+      job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+    }
+
+    if (!job) { showToast('Job data not available', 'warning'); return; }
+
+    // Save fullDescription to SAVED_JOBS + GitHub (only for saved jobs)
+    if (jobId && job) {
+      job.fullDescription = pastedText;
+      try {
+        SAVED_JOBS_SHA = await githubWriteWithRetry(
+          'saved-jobs.json',
+          { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+          SAVED_JOBS_SHA
+        );
+      } catch(e) {
+        console.error('[JFIND saveFullJD]', e);
+        // Don't block — proceed with analysis even if save fails
+      }
+    }
+
+    // Clear paste panel, run analysis with pasted text
+    const deepOutput = document.getElementById('modalDeepOutput');
+    if (deepOutput) deepOutput.innerHTML = '';
+
+    _executeDeepAnalysis(job, jobId, pastedText);
+  }
+
+
+  // ============================================================
+  //  DEEP ANALYSIS — "SKIP — USE SAVED JD" (fallback path)
+  // ============================================================
+
+  function runDeepAnalysisSkipPaste() {
+    let job = null;
+    let jobId = _deepAnalysisJobId;
+
+    if (jobId) {
+      job = SAVED_JOBS.find(j => j.id === jobId);
+    } else if (MODAL_CURRENT_JOB_IDX !== null) {
+      job = SEARCH_RESULTS_CACHE[MODAL_CURRENT_JOB_IDX];
+    }
+
+    if (!job) { showToast('Job data not available', 'warning'); return; }
+
+    const fallbackJD = job.job_description || job.description || '';
+    const deepOutput = document.getElementById('modalDeepOutput');
+    if (deepOutput) deepOutput.innerHTML = '';
+
+    _executeDeepAnalysis(job, jobId, fallbackJD);
+  }
+
+
+  // ============================================================
+  //  DEEP ANALYSIS — CLEAR SAVED FULL JD AND SHOW PASTE PANEL
+  // ============================================================
+
+  async function clearFullJdAndShowPaste(jobId) {
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+    if (!job) return;
+
+    job.fullDescription = null;
+
+    try {
+      SAVED_JOBS_SHA = await githubWriteWithRetry(
+        'saved-jobs.json',
+        { jobs: SAVED_JOBS, seenJobIds: Array.from(SEEN_JOB_IDS), dismissedJobIds: Array.from(DISMISSED_JOB_IDS), lastUpdated: new Date().toISOString() },
+        SAVED_JOBS_SHA
+      );
+    } catch(e) {
+      console.error('[JFIND clearFullJD]', e);
+      // Don't block
+    }
+
+    showDeepJdPastePanel(job, jobId);
+  }
+
+
+  // ============================================================
+  //  DEEP ANALYSIS — CORE GEMINI EXECUTION (extracted)
+  //  Uses jdText param instead of hardcoded job.description
+  //  prefixHtml: optional HTML string to prepend above results (e.g. "using saved full JD" note)
+  // ============================================================
+
+  async function _executeDeepAnalysis(job, jobId, jdText, prefixHtml) {
+
+    const deepOutput = document.getElementById('modalDeepOutput');
+    const deepSpinner = document.getElementById('modalDeepSpinner');
+    const deepBtn = document.getElementById('modalDeepAnalysisBtn');
 
     if (deepSpinner) deepSpinner.style.display = 'inline-block';
 
-    if (deepOutput) deepOutput.innerHTML = '';
-
-
-
     const geminiKey = getNextGeminiKey();
-
     if (!geminiKey) {
-
       if (deepOutput) deepOutput.innerHTML = '<span style="color:var(--muted);font-size:12px;">Add a Gemini key in Settings.</span>';
-
       if (deepSpinner) deepSpinner.style.display = 'none';
-
       return;
-
     }
 
-
-
-    // Get description - works for both search results and saved jobs
-
-    const desc = (job.job_description || job.description || '').substring(0, 4000);
+    // Use passed jdText — fullDescription if available, job.description as fallback
+    const jd = (jdText || job.fullDescription || job.job_description || job.description || '').substring(0, 8000);
 
     const title = job.job_title || job.title || 'N/A';
-
     const company = job.employer_name || job.company || 'N/A';
-
     const location = job.job_city ? [job.job_city, job.job_state].filter(Boolean).join(', ') : (job.location || 'N/A');
-
     const salary = formatSalary(job) || (job.salary ? `$${job.salary}` : 'NOT LISTED');
-
-
 
     const prompt = `You are a senior career advisor giving deep, honest analysis. No filler. No corporate speak.
 
@@ -5795,7 +5948,7 @@ Salary: ${salary}
 
 DESCRIPTION:
 
-${desc}
+${jd}
 
 ---
 
@@ -5822,8 +5975,6 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 💡 OVERALL SCORE: [X/10]
 
 [2-3 sentences: combined assessment of legitimacy + role fit + career trajectory alignment + company health. Be honest if it's a reach or a poor fit. Give a real recommendation — apply, skip, or apply with modifications.]`;
-
-
 
     try {
 
@@ -5857,11 +6008,11 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
       if (!text) throw new Error('No output');
 
-
-
       renderDeepAnalysisText(text, deepOutput);
-
-
+      // Prepend note (e.g. "Using saved full JD X chars. [Replace]") above the analysis
+      if (prefixHtml && deepOutput) {
+        deepOutput.insertAdjacentHTML('afterbegin', prefixHtml);
+      }
 
       // Cache and store if job is saved
 
@@ -5893,11 +6044,9 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
       }
 
-
-
     } catch(e) {
 
-      if (deepOutput) deepOutput.innerHTML = `<span style="color:var(--muted);font-size:12px;">Deep analysis unavailable — ${escapeHtml(e.message)}</span>`;
+      if (deepOutput) deepOutput.innerHTML += `<span style="color:var(--muted);font-size:12px;">Deep analysis unavailable — ${escapeHtml(e.message)}</span>`;
 
       if (deepBtn) deepBtn.style.display = 'inline-block';
 
