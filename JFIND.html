@@ -1398,6 +1398,37 @@
       font-size: 9pt;
     }
 
+    /* ===== WEB PREVIEW: #tailorOutputArea resume styling ===== */
+    #tailorOutputArea .rv-wrap {
+      font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 32px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 600px) {
+      #tailorOutputArea .rv-wrap {
+        padding: 16px 14px;
+        font-size: 9.5pt;
+      }
+      .rv-name {
+        font-size: 16pt;
+      }
+      .rv-job-header {
+        flex-direction: column;
+      }
+      .rv-job-date {
+        margin-left: 0;
+        font-size: 8.5pt;
+      }
+    }
+
     /* ===== COVER LETTER PDF RENDERER STYLES ===== */
     .cl-date {
       font-size: 10pt;
@@ -6978,45 +7009,40 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
   async function generateTailoredResume(jobTitle, company, jobDescription) {
 
-    const prompt = `You are a professional resume writer helping a job applicant tailor their resume. Do not use any markdown formatting. Do not use **bold**, *italic*, or any other markdown syntax. Output plain text only.
+    const prompt = `You are an elite resume writer with 15+ years of experience helping candidates land interviews at top companies. Your rewrites consistently result in callbacks. You are direct, precise, and you do NOT produce weak generic bullet points.
 
-
+Do not use any markdown formatting. Do not use **bold**, *italic*, or any other markdown syntax. Do not use [CHANGED] or any other tags. Output plain text only — the exact same format as the input resume.
 
 CANDIDATE RESUME:
-
 ${RESUME_CONTENT}
 
-
-
-JOB TITLE: ${jobTitle}
-
-COMPANY: ${company}
+TARGET JOB TITLE: ${jobTitle}
+TARGET COMPANY: ${company}
 
 JOB DESCRIPTION:
-
 ${jobDescription}
 
+YOUR TASK — Produce a fully tailored, high-impact resume by doing ALL of the following:
 
+1. PROFESSIONAL SUMMARY: Completely rewrite the summary (if present) to be a punchy 2-3 sentence statement that directly mirrors the language of this job description. Lead with the candidate's strongest relevant qualification. Name the target role and company context. Make it impossible to ignore.
 
-INSTRUCTIONS:
+2. WORK EXPERIENCE BULLETS: For every role, rewrite all bullet points to:
+   - Lead with strong action verbs (Spearheaded, Engineered, Drove, Orchestrated, Reduced, Grew — never "Responsible for" or "Helped")
+   - Inject specific metrics and numbers wherever plausible (%, $, timeframes, team sizes, scale)
+   - Mirror the exact keywords and phrases from the job description naturally
+   - Emphasize outcomes and impact, NOT just tasks
+   - Every bullet must answer: "So what? Why does this matter?" Make the value obvious.
+   - Minimum 3 strong bullets per role. Remove any weak filler bullets.
 
-1. Rewrite ONLY the bullet points in the work experience section to emphasize skills and achievements that match this specific job description. All other sections (education, certifications, skills, summary) must be returned verbatim.
+3. SKILLS SECTION: Reorder and rewrite the skills section so the most relevant skills for THIS job appear first. Add any skills mentioned in the job description that the candidate demonstrably has based on their experience (do not fabricate — infer from context).
 
-2. Use keywords and phrases from the job description naturally within existing bullets
+4. DO NOT change: job titles, company names, employment dates, education degrees, school names, certification names.
 
-3. Do NOT add fabricated experience, new roles, or fake achievements
+5. TONE: Confident, specific, and senior. This resume should read like it was written by someone who knows their worth and can prove it with data.
 
-4. Do NOT change job titles, dates, company names, education, or certifications
+6. FORMAT: Return the COMPLETE resume. Use the exact same structure and section headers as the input resume. Plain text only.
 
-5. Keep bullets that already match strongly as-is or with minor improvements
-
-6. Wrap ONLY changed bullets with [CHANGED] tags: [CHANGED]• Rewritten bullet[/CHANGED]
-
-7. Return the COMPLETE resume with ALL sections
-
-
-
-Return the full tailored resume now:`;
+Return the full tailored resume now. Make it exceptional.`;
 
 
 
@@ -7570,7 +7596,45 @@ Return the full tailored resume now:`;
 
     const html = renderResumeHtml(text);
 
-    injectAndPrint(html, 'resume');
+    const css = `body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #1a1a1a; background: #f5f5f5; margin: 0; padding: 20px; }
+.rv-wrap { max-width: 760px; margin: 0 auto; background: white; padding: 40px 48px; box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
+.rv-name { text-align: center; font-size: 22pt; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px 0; color: #000; }
+.rv-contact { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 24px; font-size: 9pt; color: #444; margin-bottom: 12px; text-align: center; }
+.rv-contact-item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.rv-section { font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin: 16px 0 4px 0; padding-bottom: 3px; border-bottom: 1.5px solid #000; color: #000; }
+.rv-job-header { display: flex; justify-content: space-between; align-items: baseline; margin: 8px 0 1px 0; }
+.rv-job-title { font-weight: 700; font-size: 10pt; color: #000; }
+.rv-job-date { font-size: 9pt; color: #333; white-space: nowrap; margin-left: 12px; }
+.rv-company { color: #5b6e8a; font-size: 9pt; margin: 0 0 4px 0; }
+.rv-bullets { margin: 3px 0 6px 0; padding-left: 18px; list-style-type: disc; }
+.rv-bullets li { margin-bottom: 3px; font-size: 9.5pt; line-height: 1.45; }
+.rv-text { font-size: 9.5pt; margin: 2px 0; }
+.rv-cert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; margin-top: 5px; font-size: 9pt; }
+.rv-cert-item-title { font-weight: 600; }
+.rv-cert-item-sub { color: #555; font-size: 8.5pt; }
+.print-btn { display: block; margin: 0 auto 24px auto; padding: 10px 28px; background: #1a56db; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
+.print-btn:hover { background: #1343b0; }
+@media print { .print-btn { display: none !important; } body { background: white; padding: 0; } .rv-wrap { box-shadow: none; padding: 0; } @page { margin: 0.75in; size: letter; } }`;
+
+    const newTab = window.open('', '_blank');
+
+    if (!newTab) { showToast('Popup blocked — please allow popups for this page', 'warning'); return; }
+
+    newTab.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tailored Resume</title>
+  <style>${css}</style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  ${html}
+</body>
+</html>`);
+
+    newTab.document.close();
 
   }
 
