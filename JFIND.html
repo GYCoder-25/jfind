@@ -5917,6 +5917,11 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
     const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+    // Convert **bold** and *italic* markdown after escaping
+    const md = s => esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+
     const DEEP_HEADERS = ['🏢 COMPANY DEEP DIVE', '🎯 ROLE FIT ANALYSIS', '📄 RESUME STRATEGY', '💡 OVERALL SCORE'];
 
     const lines = text.split('\n');
@@ -5979,7 +5984,7 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
           <span style="color:#6f42c1;font-weight:700;flex-shrink:0;">•</span>
 
-          <span style="font-size:13px;color:#333;line-height:1.5;">${esc(content)}</span>
+          <span style="font-size:13px;color:#333;line-height:1.5;">${md(content)}</span>
 
         </div>`);
 
@@ -5989,7 +5994,7 @@ Respond in EXACTLY this format. Complete every section. Be direct and honest.
 
 
 
-      parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${esc(trimmed)}</p>`);
+      parts.push(`<p style="margin:0 0 6px 0;font-size:13px;color:#333;line-height:1.6;">${md(trimmed)}</p>`);
 
     }
 
