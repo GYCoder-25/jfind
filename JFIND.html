@@ -2358,6 +2358,51 @@
 
 
 
+  <!-- Edit Content Modal (Resume / Cover Letter) -->
+
+  <div class="modal fade" id="editContentModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+
+      <div class="modal-content">
+
+        <div class="modal-header" style="background:var(--dark);color:white;border:none;">
+
+          <h5 class="modal-title fw-bold" id="editContentModalTitle" style="font-size:16px;line-height:1.3;"></h5>
+
+          <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal"></button>
+
+        </div>
+
+        <div class="modal-body" style="padding:16px 20px;">
+
+          <textarea id="editContentTextarea"
+                    class="form-control"
+                    style="font-family:monospace;font-size:12px;resize:vertical;width:100%;"
+                    rows="28"></textarea>
+
+        </div>
+
+        <div class="modal-footer" style="border-top:1px solid var(--border);padding:12px 16px;">
+
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+
+          <button type="button" class="btn btn-primary-custom" id="editContentSaveBtn" onclick="saveEditedContent()">
+
+            <i class="fas fa-save me-1"></i>Save Changes
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
   <!-- Bootstrap 5 JS -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -3951,6 +3996,12 @@ Marketing: Digital Marketing, SEO, Social Media Marketing, Influencer Marketing,
   let MODAL_CURRENT_SAVED_JOB_ID = null; // tracks which saved job the modal is showing
 
   let MODAL_ANALYSIS_CACHE = {}; // { job_id: { aiText, matchText, deepText, timestamp } }
+
+  // Edit content modal state
+
+  let _editJobId = null;       // job.id currently being edited
+
+  let _editFieldType = null;   // 'tailoredResume' or 'coverLetter'
 
 
 
@@ -8311,18 +8362,30 @@ Start with: Dear Hiring Team,`;
 
     if (job.tailoredResume) {
 
-      const coverLetterBtn = job.coverLetter
+      const editResumeBtn = `<button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('${escapeHtml(job.id)}', 'tailoredResume')" title="Edit tailored resume text">
+             <i class="fas fa-pencil-alt me-1"></i>Edit Resume
+           </button>`;
+
+      const editCoverLetterBtn = job.coverLetter
+        ? `<button class="btn btn-sm btn-outline-secondary" onclick="openEditModal('${escapeHtml(job.id)}', 'coverLetter')" title="Edit cover letter text">
+             <i class="fas fa-pencil-alt me-1"></i>Edit Cover Letter
+           </button>`
+        : '';
+
+      const downloadCoverLetterBtn = job.coverLetter
         ? `<button class="btn btn-sm btn-outline-custom" onclick="openCoverLetterInNewTab('${escapeHtml(job.id)}')" title="Open cover letter in new tab for printing">
-             <i class="fas fa-envelope me-1"></i>Cover Letter
+             <i class="fas fa-envelope me-1"></i>Download Cover Letter
            </button>`
         : '';
 
       actionsHtml = `
         <div class="dl-card-actions">
+          ${editResumeBtn}
           <button class="btn btn-sm btn-primary-custom" onclick="openResumeInNewTab('${escapeHtml(job.id)}')" title="Open tailored resume in new tab for printing">
             <i class="fas fa-file-alt me-1"></i>Download Resume
           </button>
-          ${coverLetterBtn}
+          ${editCoverLetterBtn}
+          ${downloadCoverLetterBtn}
         </div>`;
 
     } else {
@@ -8345,6 +8408,124 @@ Start with: Dear Hiring Team,`;
         </div>
         ${actionsHtml}
       </div>`;
+
+  }
+
+
+
+  /**
+   * Opens the edit modal pre-populated with the current text for
+   * either tailoredResume or coverLetter.
+   * @param {string} jobId     - The saved job's id field.
+   * @param {string} fieldType - 'tailoredResume' or 'coverLetter'.
+   */
+  function openEditModal(jobId, fieldType) {
+
+    const job = SAVED_JOBS.find(j => j.id === jobId);
+
+    if (!job) { showToast('Job not found', 'warning'); return; }
+
+    const text = job[fieldType];
+
+    if (!text) { showToast('No content to edit', 'warning'); return; }
+
+    // Store context so saveEditedContent() knows what to update
+
+    _editJobId    = jobId;
+    _editFieldType = fieldType;
+
+    // Set modal title
+
+    const label = fieldType === 'tailoredResume' ? 'Resume' : 'Cover Letter';
+
+    const title = `Edit ${label} — ${escapeHtml(job.title || 'Untitled')} at ${escapeHtml(job.company || '')}`;
+
+    document.getElementById('editContentModalTitle').textContent = title;
+
+    // Pre-populate textarea
+
+    const textarea = document.getElementById('editContentTextarea');
+
+    textarea.value = text;
+
+    textarea.rows = fieldType === 'tailoredResume' ? 28 : 16;
+
+    // Open modal
+
+    const modal = new bootstrap.Modal(document.getElementById('editContentModal'));
+
+    modal.show();
+
+  }
+
+
+
+  /**
+   * Saves the edited text from the edit modal back to SAVED_JOBS
+   * and pushes the updated saved-jobs.json to GitHub.
+   */
+  async function saveEditedContent() {
+
+    if (!_editJobId || !_editFieldType) return;
+
+    const job = SAVED_JOBS.find(j => j.id === _editJobId);
+
+    if (!job) { showToast('Job not found', 'warning'); return; }
+
+    const newText = document.getElementById('editContentTextarea').value;
+
+    const label = _editFieldType === 'tailoredResume' ? 'Resume' : 'Cover letter';
+
+    const btn = document.getElementById('editContentSaveBtn');
+
+    btn.disabled = true;
+
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+    try {
+
+      // Update in-memory array
+
+      job[_editFieldType] = newText;
+
+      // Push to GitHub
+
+      SAVED_JOBS_SHA = await githubWriteWithRetry(
+        'saved-jobs.json',
+        {
+          jobs: SAVED_JOBS,
+          seenJobIds: Array.from(SEEN_JOB_IDS),
+          dismissedJobIds: Array.from(DISMISSED_JOB_IDS),
+          lastUpdated: new Date().toISOString()
+        },
+        SAVED_JOBS_SHA
+      );
+
+      // Close modal
+
+      const modalEl = document.getElementById('editContentModal');
+
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+      if (modalInstance) modalInstance.hide();
+
+      showToast(`${label} saved ✓`, 'success');
+
+      // Re-render Download tab so card reflects any cover letter additions
+
+      renderDownloadTab();
+
+    } catch(e) {
+
+      handleApiError(e, 'saveEditedContent');
+
+    } finally {
+
+      btn.disabled = false;
+
+      btn.innerHTML = '<i class="fas fa-save me-1"></i>Save Changes';
+
+    }
 
   }
 
