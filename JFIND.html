@@ -7878,6 +7878,24 @@ Return the full tailored resume now. Make it exceptional.`;
 
         }
 
+        // ALL-CAPS fallback section detection — handles AI-rewritten resumes that
+        // strip === dividers. Known section keywords only, to avoid false positives
+        // on lines like "FIOS" or "CRM" that appear inside job descriptions.
+        const KNOWN_SECTIONS = new Set([
+          'EXPERIENCE', 'WORK EXPERIENCE', 'PROFESSIONAL EXPERIENCE',
+          'EDUCATION', 'SKILLS', 'CERTIFICATIONS', 'CERTIFICATES',
+          'SUMMARY', 'OBJECTIVE', 'PROJECTS', 'AWARDS', 'LANGUAGES',
+          'VOLUNTEER', 'PUBLICATIONS', 'REFERENCES', 'HIGHLIGHTS'
+        ]);
+        if (ln === ln.toUpperCase() && /[A-Z]/.test(ln) && ln.length > 2 && KNOWN_SECTIONS.has(ln)) {
+          closeBullets();
+          closeCertGrid();
+          if (inJobBlock) { html += '</div>'; inJobBlock = false; }
+          currentSection = ln;
+          html += `<h2 class="rv-section">${escapeHtml(ln)}</h2>`;
+          continue;
+        }
+
         // CERTIFICATES section — one row per cert, 3-column parse
 
         if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
@@ -7890,21 +7908,21 @@ Return the full tailored resume now. Make it exceptional.`;
 
           const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
 
-          const parts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
+          const certParts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
 
-          if (parts.length >= 3) {
+          if (certParts.length >= 3) {
 
             html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
-              `<div class="rv-cert-date">${escapeHtml(parts.slice(2).join(' '))}</div>` +
+              `<div class="rv-cert-name">${escapeHtml(certParts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(certParts[1])}</div>` +
+              `<div class="rv-cert-date">${escapeHtml(certParts.slice(2).join(' '))}</div>` +
               `</div>`;
 
-          } else if (parts.length === 2) {
+          } else if (certParts.length === 2) {
 
             html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
+              `<div class="rv-cert-name">${escapeHtml(certParts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(certParts[1])}</div>` +
               `<div class="rv-cert-date"></div>` +
               `</div>`;
 
@@ -7949,48 +7967,6 @@ Return the full tailored resume now. Make it exceptional.`;
             if (!inBullets) { html += '<ul class="rv-bullets">'; inBullets = true; }
 
             html += `<li>${escapeHtml(skillText)}</li>`;
-
-          }
-
-          continue;
-
-        }
-
-        // CERTIFICATES section — one row per cert, 3-column parse
-
-        if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
-
-          closeBullets();
-
-          if (!inCertGrid) { html += '<div class="rv-cert-grid">'; inCertGrid = true; }
-
-          const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
-
-          const parts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
-
-          if (parts.length >= 3) {
-
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
-              `<div class="rv-cert-date">${escapeHtml(parts.slice(2).join(' '))}</div>` +
-              `</div>`;
-
-          } else if (parts.length === 2) {
-
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
-              `<div class="rv-cert-date"></div>` +
-              `</div>`;
-
-          } else {
-
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(certText)}</div>` +
-              `<div class="rv-cert-issuer"></div>` +
-              `<div class="rv-cert-date"></div>` +
-              `</div>`;
 
           }
 
