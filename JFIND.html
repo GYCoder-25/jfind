@@ -7518,6 +7518,36 @@ Return the full tailored resume now. Make it exceptional.`;
       return true;
     }
 
+    // ---- Helper: parse a cert line into [name, issuer, date] regardless of spacing ----
+    function parseCertLine(text) {
+      // Try multi-space split first (original format with padding preserved)
+      const multiParts = text.split(/  +/).map(s => s.trim()).filter(s => s);
+      if (multiParts.length >= 3) return [multiParts[0], multiParts[1], multiParts.slice(2).join(' ')];
+      if (multiParts.length === 2) return [multiParts[0], multiParts[1], ''];
+
+      // Fallback: extract date from end of line, then split remainder into name + issuer
+      const dateMatch = text.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*$/i);
+      if (dateMatch) {
+        const dateStr = dateMatch[0].trim();
+        const beforeDate = text.slice(0, dateMatch.index).trim();
+        // Try multi-space split on the part before the date
+        const beforeParts = beforeDate.split(/\s{2,}/).map(s => s.trim()).filter(s => s);
+        if (beforeParts.length >= 2) return [beforeParts[0], beforeParts.slice(1).join(' '), dateStr];
+        // Single-space collapsed: scan for known issuers
+        const knownIssuers = ['Google/Coursera', 'Google', 'HubSpot', 'Coursera', 'LinkedIn', 'Microsoft', 'AWS', 'PMI'];
+        for (const issuer of knownIssuers) {
+          if (beforeDate.includes(issuer)) {
+            const nameStr = beforeDate.replace(issuer, '').trim();
+            return [nameStr, issuer, dateStr];
+          }
+        }
+        return [beforeDate, '', dateStr];
+      }
+
+      // Last resort: whole line as name
+      return [text, '', ''];
+    }
+
     // ---- Skip leading blanks ----
     while (i < lines.length && !lines[i].trim()) i++;
 
@@ -7603,14 +7633,8 @@ Return the full tailored resume now. Make it exceptional.`;
         flushBullets();
         if (!inCertGrid) { parts.push('<div class="rv-cert-grid">'); inCertGrid = true; }
         const certText = line.startsWith('•') ? line.slice(1).trim() : line;
-        const certParts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
-        if (certParts.length >= 3) {
-          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certParts[0])}</div><div class="rv-cert-issuer">${esc(certParts[1])}</div><div class="rv-cert-date">${esc(certParts.slice(2).join(' '))}</div></div>`);
-        } else if (certParts.length === 2) {
-          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certParts[0])}</div><div class="rv-cert-issuer">${esc(certParts[1])}</div><div class="rv-cert-date"></div></div>`);
-        } else {
-          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certText)}</div><div class="rv-cert-issuer"></div><div class="rv-cert-date"></div></div>`);
-        }
+        const [certName, certIssuer, certDate] = parseCertLine(certText);
+        parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(certIssuer)}</div><div class="rv-cert-date">${esc(certDate)}</div></div>`);
         continue;
       }
 
@@ -7935,33 +7959,38 @@ Return the full tailored resume now. Make it exceptional.`;
 
           const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
 
-          const certParts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
+          // Helper: parse cert line into [name, issuer, date] regardless of spacing
+          const parseCertLine = (text) => {
+            // Try multi-space split first (original format with padding preserved)
+            const multiParts = text.split(/  +/).map(s => s.trim()).filter(s => s);
+            if (multiParts.length >= 3) return [multiParts[0], multiParts[1], multiParts.slice(2).join(' ')];
+            if (multiParts.length === 2) return [multiParts[0], multiParts[1], ''];
+            // Fallback: extract date from end of line, then split remainder into name + issuer
+            const dateMatch = text.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*$/i);
+            if (dateMatch) {
+              const dateStr = dateMatch[0].trim();
+              const beforeDate = text.slice(0, dateMatch.index).trim();
+              const beforeParts = beforeDate.split(/\s{2,}/).map(s => s.trim()).filter(s => s);
+              if (beforeParts.length >= 2) return [beforeParts[0], beforeParts.slice(1).join(' '), dateStr];
+              const knownIssuers = ['Google/Coursera', 'Google', 'HubSpot', 'Coursera', 'LinkedIn', 'Microsoft', 'AWS', 'PMI'];
+              for (const issuer of knownIssuers) {
+                if (beforeDate.includes(issuer)) {
+                  const nameStr = beforeDate.replace(issuer, '').trim();
+                  return [nameStr, issuer, dateStr];
+                }
+              }
+              return [beforeDate, '', dateStr];
+            }
+            return [text, '', ''];
+          };
 
-          if (certParts.length >= 3) {
+          const [certName, certIssuer, certDate] = parseCertLine(certText);
 
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(certParts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(certParts[1])}</div>` +
-              `<div class="rv-cert-date">${escapeHtml(certParts.slice(2).join(' '))}</div>` +
-              `</div>`;
-
-          } else if (certParts.length === 2) {
-
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(certParts[0])}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(certParts[1])}</div>` +
-              `<div class="rv-cert-date"></div>` +
-              `</div>`;
-
-          } else {
-
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(certText)}</div>` +
-              `<div class="rv-cert-issuer"></div>` +
-              `<div class="rv-cert-date"></div>` +
-              `</div>`;
-
-          }
+          html += `<div class="rv-cert-row">` +
+            `<div class="rv-cert-name">${escapeHtml(certName)}</div>` +
+            `<div class="rv-cert-issuer">${escapeHtml(certIssuer)}</div>` +
+            `<div class="rv-cert-date">${escapeHtml(certDate)}</div>` +
+            `</div>`;
 
           continue;
 
