@@ -7240,7 +7240,7 @@ YOUR TASK — Produce a fully tailored, high-impact resume by doing ALL of the f
 
 3. SKILLS SECTION: Reorder and rewrite the skills section so the most relevant skills for THIS job appear first. Add any skills mentioned in the job description that the candidate demonstrably has based on their experience (do not fabricate — infer from context).
 
-4. DO NOT change: job titles, company names, employment dates, education degrees, school names, certification names.
+4. DO NOT change: job titles, company names, employment dates, education degrees, school names, certification names. For CERTIFICATES/CERTIFICATIONS sections: preserve EXACTLY the same single-line format — cert name, issuer, and date all on ONE line separated by spaces. Do NOT split cert entries across multiple lines.
 
 5. TONE: Confident, specific, and senior. This resume should read like it was written by someone who knows their worth and can prove it with data.
 
@@ -7629,12 +7629,44 @@ Return the full tailored resume now. Make it exceptional.`;
       }
 
       // --- CERTIFICATES section — 3-column cert rows ---
+      // Handles both: (a) single-line "Name  Issuer  Date" format (DEFAULT_RESUME)
+      //               (b) multi-line format where Gemini puts each field on its own line
       if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
         flushBullets();
         if (!inCertGrid) { parts.push('<div class="rv-cert-grid">'); inCertGrid = true; }
         const certText = line.startsWith('•') ? line.slice(1).trim() : line;
         const [certName, certIssuer, certDate] = parseCertLine(certText);
-        parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(certIssuer)}</div><div class="rv-cert-date">${esc(certDate)}</div></div>`);
+
+        // If parseCertLine extracted 2+ fields, emit immediately (single-line format)
+        if (certIssuer || certDate) {
+          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(certIssuer)}</div><div class="rv-cert-date">${esc(certDate)}</div></div>`);
+          continue;
+        }
+
+        // Only name field found — Gemini likely split this cert across multiple lines.
+        // Peek ahead and collect the next 1–2 non-blank, non-header lines as issuer + date.
+        let collectedIssuer = '';
+        let collectedDate = '';
+        while (i < lines.length) {
+          const peek = lines[i].trim();
+          if (!peek) break;                          // blank = end of this cert's fields
+          if (/^[=\-*_]{3,}$/.test(peek)) break;    // separator line
+          if (isAllCaps(peek)) break;                // new section header
+          // If it looks like a date (short, contains month+year), treat as date field
+          if (DATE_RE.test(peek) && peek.length < 40 && !collectedDate) {
+            collectedDate = peek;
+            i++;
+            break;  // date is always the last field
+          }
+          // Otherwise treat as issuer (if not already collected)
+          if (!collectedIssuer) {
+            collectedIssuer = peek;
+            i++;
+          } else {
+            break;
+          }
+        }
+        parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(collectedIssuer)}</div><div class="rv-cert-date">${esc(collectedDate)}</div></div>`);
         continue;
       }
 
@@ -7955,17 +7987,13 @@ Return the full tailored resume now. Make it exceptional.`;
 
           if (!inCertGrid) { html += '<div class="rv-cert-grid">'; inCertGrid = true; }
 
-          // bullet or plain line
-
           const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
 
           // Helper: parse cert line into [name, issuer, date] regardless of spacing
           const parseCertLine = (text) => {
-            // Try multi-space split first (original format with padding preserved)
             const multiParts = text.split(/  +/).map(s => s.trim()).filter(s => s);
             if (multiParts.length >= 3) return [multiParts[0], multiParts[1], multiParts.slice(2).join(' ')];
             if (multiParts.length === 2) return [multiParts[0], multiParts[1], ''];
-            // Fallback: extract date from end of line, then split remainder into name + issuer
             const dateMatch = text.match(/\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}\s*$/i);
             if (dateMatch) {
               const dateStr = dateMatch[0].trim();
@@ -7986,10 +8014,41 @@ Return the full tailored resume now. Make it exceptional.`;
 
           const [certName, certIssuer, certDate] = parseCertLine(certText);
 
+          // Single-line format with 2+ fields: emit immediately
+          if (certIssuer || certDate) {
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(certName)}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(certIssuer)}</div>` +
+              `<div class="rv-cert-date">${escapeHtml(certDate)}</div>` +
+              `</div>`;
+            continue;
+          }
+
+          // Multi-line format (Gemini split the cert): peek ahead for issuer + date
+          let collectedIssuer = '';
+          let collectedDate = '';
+          const DATE_RE_CERT = /\b(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|\b\d{4}\b/i;
+          while (i < lines.length) {
+            const peek = lines[i].trim();
+            if (!peek) break;
+            if (/^={5,}/.test(peek) || /^-{5,}/.test(peek)) break;
+            if (peek === peek.toUpperCase() && /[A-Z]/.test(peek) && peek.length > 2) break;
+            if (DATE_RE_CERT.test(peek) && peek.length < 40 && !collectedDate) {
+              collectedDate = peek;
+              i++;
+              break;
+            }
+            if (!collectedIssuer) {
+              collectedIssuer = peek;
+              i++;
+            } else {
+              break;
+            }
+          }
           html += `<div class="rv-cert-row">` +
             `<div class="rv-cert-name">${escapeHtml(certName)}</div>` +
-            `<div class="rv-cert-issuer">${escapeHtml(certIssuer)}</div>` +
-            `<div class="rv-cert-date">${escapeHtml(certDate)}</div>` +
+            `<div class="rv-cert-issuer">${escapeHtml(collectedIssuer)}</div>` +
+            `<div class="rv-cert-date">${escapeHtml(collectedDate)}</div>` +
             `</div>`;
 
           continue;
