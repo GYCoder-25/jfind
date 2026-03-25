@@ -7546,6 +7546,8 @@ Return the full tailored resume now. Make it exceptional.`;
     // ---- Main body: sections, jobs, bullets, paragraphs ----
     let bulletBuffer = [];   // pending bullet <li> items
     let inJobBlock = false;  // are we currently inside a job entry?
+    let inCertGrid = false;  // are we inside a rv-cert-grid block?
+    let currentSection = ''; // track current section for context-aware rendering
     let lastWasBlank = false;
 
     function flushBullets() {
@@ -7571,6 +7573,7 @@ Return the full tailored resume now. Make it exceptional.`;
         inJobBlock = false;
         continue;
       }
+
       lastWasBlank = false;
 
       // --- Bullet line (starts with "- " or "• ") ---
@@ -7583,8 +7586,26 @@ Return the full tailored resume now. Make it exceptional.`;
       // --- ALL-CAPS section header ---
       if (isAllCaps(line)) {
         flushBullets();
+        if (inCertGrid) { parts.push('</div>'); inCertGrid = false; }
         inJobBlock = false;
+        currentSection = line.trim().toUpperCase();
         parts.push(`<div class="rv-section-header">${esc(line)}</div>`);
+        continue;
+      }
+
+      // --- CERTIFICATES section — 3-column cert rows ---
+      if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
+        flushBullets();
+        if (!inCertGrid) { parts.push('<div class="rv-cert-grid">'); inCertGrid = true; }
+        const certText = line.startsWith('•') ? line.slice(1).trim() : line;
+        const certParts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
+        if (certParts.length >= 3) {
+          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certParts[0])}</div><div class="rv-cert-issuer">${esc(certParts[1])}</div><div class="rv-cert-date">${esc(certParts.slice(2).join(' '))}</div></div>`);
+        } else if (certParts.length === 2) {
+          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certParts[0])}</div><div class="rv-cert-issuer">${esc(certParts[1])}</div><div class="rv-cert-date"></div></div>`);
+        } else {
+          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certText)}</div><div class="rv-cert-issuer"></div><div class="rv-cert-date"></div></div>`);
+        }
         continue;
       }
 
@@ -7601,7 +7622,7 @@ Return the full tailored resume now. Make it exceptional.`;
 
       // Case A: current line has no date, next line IS a date line
       // → current line = job title, next line = date
-      if (!isDateLine(line) && isDateLine(nextLine) && !isAllCaps(line)) {
+      if (!isDateLine(line) && isDateLine(nextLine) && !isAllCaps(line) && currentSection !== 'CERTIFICATES' && currentSection !== 'CERTIFICATIONS') {
         const dateText = nextLine;
         i = nextNonBlankIdx + 1; // consume the date line
 
@@ -7626,7 +7647,7 @@ Return the full tailored resume now. Make it exceptional.`;
       // Case B: current line contains a date pattern inline (e.g., "Job Title | July 2024 - Present")
       // Look for a pipe separator with a date after it
       const pipeDateMatch = line.match(/^(.+?)\s*\|\s*(.+\d{4}.*)$/);
-      if (pipeDateMatch && DATE_RE.test(pipeDateMatch[2])) {
+      if (pipeDateMatch && DATE_RE.test(pipeDateMatch[2]) && currentSection !== 'CERTIFICATES' && currentSection !== 'CERTIFICATIONS') {
         const titlePart = pipeDateMatch[1].trim();
         const datePart = pipeDateMatch[2].trim();
 
@@ -7655,7 +7676,7 @@ Return the full tailored resume now. Make it exceptional.`;
         const titlePart = multiSpaceMatch[1].trim();
         const datePart  = multiSpaceMatch[2].trim();
         // Only treat as job header if the right side looks like a date
-        if (DATE_RE.test(datePart) && !isAllCaps(titlePart)) {
+        if (DATE_RE.test(datePart) && !isAllCaps(titlePart) && currentSection !== 'CERTIFICATES' && currentSection !== 'CERTIFICATIONS') {
           let companyText = '';
           let companyNonBlankIdx = i;
           while (companyNonBlankIdx < lines.length && !lines[companyNonBlankIdx].trim()) companyNonBlankIdx++;
@@ -7690,7 +7711,8 @@ Return the full tailored resume now. Make it exceptional.`;
       }
     }
 
-    // Flush any trailing bullets
+    // Flush any trailing cert grid or bullets
+    if (inCertGrid) { parts.push('</div>'); inCertGrid = false; }
     flushBullets();
 
     return `<div class="resume-wrap">${parts.join('\n')}</div>`;
@@ -7994,7 +8016,7 @@ Return the full tailored resume now. Make it exceptional.`;
 
         // Job title + date (title ... lots of spaces ... date)
 
-        if (/^[A-Za-z].+\s{3,}\w.+\d{4}/.test(ln)) {
+        if (/^[A-Za-z].+\s{3,}\w.+\d{4}/.test(ln) && currentSection !== 'CERTIFICATES' && currentSection !== 'CERTIFICATIONS' && currentSection !== 'EDUCATION') {
 
           const parts = ln.split(/\s{3,}/);
 
