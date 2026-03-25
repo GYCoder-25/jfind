@@ -1365,15 +1365,17 @@
     }
 
     .rv-cert-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 3px 20px;
+      display: table;
+      width: 100%;
       margin-top: 5px;
       font-size: 9pt;
+      border-collapse: collapse;
     }
 
-    .rv-cert-item-title { font-weight: 600; }
-    .rv-cert-item-sub { color: #555; font-size: 8.5pt; }
+    .rv-cert-row { display: table-row; }
+    .rv-cert-name { display: table-cell; font-weight: 600; padding: 1px 16px 1px 0; white-space: nowrap; }
+    .rv-cert-issuer { display: table-cell; color: #555; padding: 1px 16px 1px 0; white-space: nowrap; }
+    .rv-cert-date { display: table-cell; color: #555; text-align: right; white-space: nowrap; }
 
     .rv-skills-group {
       margin-bottom: 6px;
@@ -7782,8 +7784,6 @@ Return the full tailored resume now. Make it exceptional.`;
 
       let inCertGrid = false;
 
-      let certBuffer = [];
-
       let currentSection = '';
 
       const closeBullets = () => {
@@ -7795,20 +7795,6 @@ Return the full tailored resume now. Make it exceptional.`;
       const closeCertGrid = () => {
 
         if (inCertGrid) {
-
-          // flush remaining certBuffer
-
-          if (certBuffer.length) {
-
-            html += '<div class="rv-cert-row">';
-
-            certBuffer.forEach(c => html += `<div class="rv-cert-item">${c}</div>`);
-
-            html += '</div>';
-
-            certBuffer = [];
-
-          }
 
           html += '</div>'; // close rv-cert-grid
 
@@ -7880,7 +7866,7 @@ Return the full tailored resume now. Make it exceptional.`;
 
         }
 
-        // CERTIFICATES section — pair items into grid
+        // CERTIFICATES section — one row per cert, 3-column parse
 
         if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
 
@@ -7892,17 +7878,31 @@ Return the full tailored resume now. Make it exceptional.`;
 
           const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
 
-          certBuffer.push(escapeHtml(certText));
+          const parts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
 
-          if (certBuffer.length === 2) {
+          if (parts.length >= 3) {
 
-            html += '<div class="rv-cert-row">';
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
+              `<div class="rv-cert-date">${escapeHtml(parts.slice(2).join(' '))}</div>` +
+              `</div>`;
 
-            certBuffer.forEach(c => html += `<div class="rv-cert-item">${c}</div>`);
+          } else if (parts.length === 2) {
 
-            html += '</div>';
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
+              `<div class="rv-cert-date"></div>` +
+              `</div>`;
 
-            certBuffer = [];
+          } else {
+
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(certText)}</div>` +
+              `<div class="rv-cert-issuer"></div>` +
+              `<div class="rv-cert-date"></div>` +
+              `</div>`;
 
           }
 
@@ -8053,9 +8053,11 @@ Return the full tailored resume now. Make it exceptional.`;
 .rv-bullets { margin: 3px 0 6px 0; padding-left: 18px; list-style-type: disc; }
 .rv-bullets li { margin-bottom: 3px; font-size: 9.5pt; line-height: 1.45; }
 .rv-text { font-size: 9.5pt; margin: 2px 0; }
-.rv-cert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 20px; margin-top: 5px; font-size: 9pt; }
-.rv-cert-item-title { font-weight: 600; }
-.rv-cert-item-sub { color: #555; font-size: 8.5pt; }
+.rv-cert-grid { display: table; width: 100%; margin-top: 5px; font-size: 9pt; border-collapse: collapse; }
+.rv-cert-row { display: table-row; }
+.rv-cert-name { display: table-cell; font-weight: 600; padding: 1px 16px 1px 0; white-space: nowrap; }
+.rv-cert-issuer { display: table-cell; color: #555; padding: 1px 16px 1px 0; white-space: nowrap; }
+.rv-cert-date { display: table-cell; color: #555; text-align: right; white-space: nowrap; }
 .print-btn { display: block; margin: 0 auto 24px auto; padding: 10px 28px; background: #1a56db; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
 .print-btn:hover { background: #1343b0; }
 @media print { .print-btn { display: none !important; } body { background: white; padding: 0; } .rv-wrap { box-shadow: none; padding: 0; } @page { margin: 0.75in; size: letter; } }`;
