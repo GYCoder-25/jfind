@@ -1364,18 +1364,10 @@
       margin: 2px 0;
     }
 
-    .rv-cert-grid {
-      display: table;
-      width: 100%;
-      margin-top: 5px;
-      font-size: 9pt;
-      border-collapse: collapse;
-    }
-
-    .rv-cert-row { display: table-row; }
-    .rv-cert-name { display: table-cell; font-weight: 600; padding: 1px 16px 1px 0; white-space: nowrap; }
-    .rv-cert-issuer { display: table-cell; color: #555; padding: 1px 16px 1px 0; white-space: nowrap; }
-    .rv-cert-date { display: table-cell; color: #555; text-align: right; white-space: nowrap; }
+    .rv-cert-item { display: flex; justify-content: space-between; align-items: baseline; padding: 1px 0; font-size: 9pt; }
+    .rv-cert-name { font-weight: 600; flex: 0 1 auto; padding-right: 16px; color: #1a1a1a; white-space: nowrap; }
+    .rv-cert-issuer { color: #555; flex: 1 1 auto; padding-right: 16px; white-space: nowrap; }
+    .rv-cert-date { color: #555; white-space: nowrap; text-align: right; flex: 0 0 auto; }
 
     .rv-skills-group {
       margin-bottom: 6px;
@@ -7576,7 +7568,7 @@ Return the full tailored resume now. Make it exceptional.`;
     // ---- Main body: sections, jobs, bullets, paragraphs ----
     let bulletBuffer = [];   // pending bullet <li> items
     let inJobBlock = false;  // are we currently inside a job entry?
-    let inCertGrid = false;  // are we inside a rv-cert-grid block?
+    // inCertGrid removed — no wrapper div needed with flexbox approach
     let currentSection = ''; // track current section for context-aware rendering
     let lastWasBlank = false;
 
@@ -7621,7 +7613,6 @@ Return the full tailored resume now. Make it exceptional.`;
       // --- ALL-CAPS section header ---
       if (isAllCaps(line)) {
         flushBullets();
-        if (inCertGrid) { parts.push('</div>'); inCertGrid = false; }
         inJobBlock = false;
         currentSection = line.trim().toUpperCase();
         parts.push(`<div class="rv-section-header">${esc(line)}</div>`);
@@ -7633,13 +7624,12 @@ Return the full tailored resume now. Make it exceptional.`;
       //               (b) multi-line format where Gemini puts each field on its own line
       if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
         flushBullets();
-        if (!inCertGrid) { parts.push('<div class="rv-cert-grid">'); inCertGrid = true; }
         const certText = line.startsWith('•') ? line.slice(1).trim() : line;
         const [certName, certIssuer, certDate] = parseCertLine(certText);
 
         // If parseCertLine extracted 2+ fields, emit immediately (single-line format)
         if (certIssuer || certDate) {
-          parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(certIssuer)}</div><div class="rv-cert-date">${esc(certDate)}</div></div>`);
+          parts.push(`<div class="rv-cert-item"><span class="rv-cert-name">${esc(certName)}</span><span class="rv-cert-issuer">${esc(certIssuer)}</span><span class="rv-cert-date">${esc(certDate)}</span></div>`);
           continue;
         }
 
@@ -7666,7 +7656,7 @@ Return the full tailored resume now. Make it exceptional.`;
             break;
           }
         }
-        parts.push(`<div class="rv-cert-row"><div class="rv-cert-name">${esc(certName)}</div><div class="rv-cert-issuer">${esc(collectedIssuer)}</div><div class="rv-cert-date">${esc(collectedDate)}</div></div>`);
+        parts.push(`<div class="rv-cert-item"><span class="rv-cert-name">${esc(certName)}</span><span class="rv-cert-issuer">${esc(collectedIssuer)}</span><span class="rv-cert-date">${esc(collectedDate)}</span></div>`);
         continue;
       }
 
@@ -7772,8 +7762,7 @@ Return the full tailored resume now. Make it exceptional.`;
       }
     }
 
-    // Flush any trailing cert grid or bullets
-    if (inCertGrid) { parts.push('</div>'); inCertGrid = false; }
+    // Flush any trailing bullets
     flushBullets();
 
     return `<div class="resume-wrap">${parts.join('\n')}</div>`;
@@ -7877,13 +7866,8 @@ Return the full tailored resume now. Make it exceptional.`;
 
       const closeCertGrid = () => {
 
-        if (inCertGrid) {
-
-          html += '</div>'; // close rv-cert-grid
-
-          inCertGrid = false;
-
-        }
+        // No wrapper div with flexbox approach — just reset flag
+        inCertGrid = false;
 
       };
 
@@ -7985,7 +7969,7 @@ Return the full tailored resume now. Make it exceptional.`;
 
           closeBullets();
 
-          if (!inCertGrid) { html += '<div class="rv-cert-grid">'; inCertGrid = true; }
+          if (!inCertGrid) { inCertGrid = true; }
 
           const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
 
@@ -8016,11 +8000,7 @@ Return the full tailored resume now. Make it exceptional.`;
 
           // Single-line format with 2+ fields: emit immediately
           if (certIssuer || certDate) {
-            html += `<div class="rv-cert-row">` +
-              `<div class="rv-cert-name">${escapeHtml(certName)}</div>` +
-              `<div class="rv-cert-issuer">${escapeHtml(certIssuer)}</div>` +
-              `<div class="rv-cert-date">${escapeHtml(certDate)}</div>` +
-              `</div>`;
+            html += `<div class="rv-cert-item"><span class="rv-cert-name">${escapeHtml(certName)}</span><span class="rv-cert-issuer">${escapeHtml(certIssuer)}</span><span class="rv-cert-date">${escapeHtml(certDate)}</span></div>`;
             continue;
           }
 
@@ -8045,11 +8025,7 @@ Return the full tailored resume now. Make it exceptional.`;
               break;
             }
           }
-          html += `<div class="rv-cert-row">` +
-            `<div class="rv-cert-name">${escapeHtml(certName)}</div>` +
-            `<div class="rv-cert-issuer">${escapeHtml(collectedIssuer)}</div>` +
-            `<div class="rv-cert-date">${escapeHtml(collectedDate)}</div>` +
-            `</div>`;
+          html += `<div class="rv-cert-item"><span class="rv-cert-name">${escapeHtml(certName)}</span><span class="rv-cert-issuer">${escapeHtml(collectedIssuer)}</span><span class="rv-cert-date">${escapeHtml(collectedDate)}</span></div>`;
 
           continue;
 
@@ -8198,11 +8174,10 @@ Return the full tailored resume now. Make it exceptional.`;
 .rv-bullets { margin: 3px 0 6px 0; padding-left: 18px; list-style-type: disc; }
 .rv-bullets li { margin-bottom: 3px; font-size: 9.5pt; line-height: 1.45; }
 .rv-text { font-size: 9.5pt; margin: 2px 0; }
-.rv-cert-grid { display: table; width: 100%; margin-top: 5px; font-size: 9pt; border-collapse: collapse; }
-.rv-cert-row { display: table-row; }
-.rv-cert-name { display: table-cell; font-weight: 600; padding: 1px 16px 1px 0; white-space: nowrap; }
-.rv-cert-issuer { display: table-cell; color: #555; padding: 1px 16px 1px 0; white-space: nowrap; }
-.rv-cert-date { display: table-cell; color: #555; text-align: right; white-space: nowrap; }
+.rv-cert-item { display: flex; justify-content: space-between; align-items: baseline; padding: 1px 0; font-size: 9pt; }
+.rv-cert-name { font-weight: 600; flex: 0 1 auto; padding-right: 16px; color: #1a1a1a; white-space: nowrap; }
+.rv-cert-issuer { color: #555; flex: 1 1 auto; padding-right: 16px; white-space: nowrap; }
+.rv-cert-date { color: #555; white-space: nowrap; text-align: right; flex: 0 0 auto; }
 .print-btn { display: block; margin: 0 auto 24px auto; padding: 10px 28px; background: #1a56db; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.5px; }
 .print-btn:hover { background: #1343b0; }
 @media print { .print-btn { display: none !important; } body { background: white; padding: 0; } .rv-wrap { box-shadow: none; padding: 0; } @page { margin: 0.75in; size: letter; } }`;
@@ -9036,18 +9011,11 @@ Start with: Dear Hiring Team,`;
         color: #222;
         text-align: left;
       }
-      /* Cert table */
-      .rv-cert-grid {
-        display: table;
-        width: 100%;
-        margin-top: 4px;
-        font-size: 7.5pt;
-        border-collapse: collapse;
-      }
-      .rv-cert-row { display: table-row; }
-      .rv-cert-name { display: table-cell; font-weight: 600; padding: 1px 16px 1px 0; white-space: nowrap; color: #1a1a1a; }
-      .rv-cert-issuer { display: table-cell; color: #555; padding: 1px 16px 1px 0; white-space: nowrap; }
-      .rv-cert-date { display: table-cell; color: #555; text-align: right; white-space: nowrap; }
+      /* Cert rows — flexbox */
+      .rv-cert-item { display: flex; justify-content: space-between; align-items: baseline; padding: 1px 0; font-size: 9pt; }
+      .rv-cert-name { font-weight: 600; flex: 0 1 auto; padding-right: 16px; color: #1a1a1a; white-space: nowrap; }
+      .rv-cert-issuer { color: #555; flex: 1 1 auto; padding-right: 16px; white-space: nowrap; }
+      .rv-cert-date { color: #555; white-space: nowrap; text-align: right; flex: 0 0 auto; }
       /* Context bar (hidden at print) */
       .context-bar {
         text-align: center;
