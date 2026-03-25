@@ -7944,6 +7944,48 @@ Return the full tailored resume now. Make it exceptional.`;
 
         }
 
+        // CERTIFICATES section — one row per cert, 3-column parse
+
+        if (currentSection === 'CERTIFICATES' || currentSection === 'CERTIFICATIONS') {
+
+          closeBullets();
+
+          if (!inCertGrid) { html += '<div class="rv-cert-grid">'; inCertGrid = true; }
+
+          const certText = ln.startsWith('•') ? ln.slice(1).trim() : ln;
+
+          const parts = certText.split(/  +/).map(s => s.trim()).filter(s => s);
+
+          if (parts.length >= 3) {
+
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
+              `<div class="rv-cert-date">${escapeHtml(parts.slice(2).join(' '))}</div>` +
+              `</div>`;
+
+          } else if (parts.length === 2) {
+
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(parts[0])}</div>` +
+              `<div class="rv-cert-issuer">${escapeHtml(parts[1])}</div>` +
+              `<div class="rv-cert-date"></div>` +
+              `</div>`;
+
+          } else {
+
+            html += `<div class="rv-cert-row">` +
+              `<div class="rv-cert-name">${escapeHtml(certText)}</div>` +
+              `<div class="rv-cert-issuer"></div>` +
+              `<div class="rv-cert-date"></div>` +
+              `</div>`;
+
+          }
+
+          continue;
+
+        }
+
         // Bullet line
 
         if (ln.startsWith('•')) {
