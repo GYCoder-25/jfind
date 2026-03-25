@@ -7840,6 +7840,12 @@ Return the full tailored resume now. Make it exceptional.`;
 
             i++;
 
+            // Skip the closing === that follows the section name in double-=== format
+            // e.g.  ===\nCERTIFICATES\n===\n  — after emitting the h2 we must consume
+            // the closing divider so it is NOT re-processed as a new section opener.
+            while (i < lines.length && !lines[i].trim()) i++; // skip blanks
+            if (i < lines.length && /^={5,}/.test(lines[i].trim())) i++; // consume closing ===
+
           }
 
           continue;
