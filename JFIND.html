@@ -7494,8 +7494,8 @@ Return the full tailored resume now. Make it exceptional.`;
     function isAllCaps(line) {
       const t = line.trim();
       if (t.length <= 2) return false;
-      // Must have letters and all letters are uppercase
-      if (!/[A-Z]/.test(t)) return false;
+      // Must have at least one letter (excludes separator lines like ===, ---)
+      if (!/[A-Za-z]/.test(t)) return false;
       return t === t.toUpperCase();
     }
 
@@ -7575,6 +7575,11 @@ Return the full tailored resume now. Make it exceptional.`;
       }
 
       lastWasBlank = false;
+
+      // --- Skip separator/decorator lines (===, ---, *** etc.) ---
+      if (/^[=\-*_]{3,}$/.test(line)) {
+        continue;
+      }
 
       // --- Bullet line (starts with "- " or "• ") ---
       if (line.startsWith('- ') || line.startsWith('• ')) {
