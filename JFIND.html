@@ -7823,10 +7823,16 @@ Return the full tailored resume now. Make it exceptional.`;
           inJobBlock = false;
 
           // Next non-blank line is section header
+          // Handle double-=== format (closing === after section name):
+          // First === fires: grab section name, render h2, advance i.
+          // Second === fires: next non-blank is content, NOT a new header — skip silently.
 
           skipBlanks();
 
-          if (i < lines.length && !/^={5,}/.test(lines[i]) && !/^-{5,}/.test(lines[i])) {
+          if (i < lines.length && /^={5,}/.test(lines[i])) {
+            // This is the CLOSING === after the section name — skip it silently
+            i++;
+          } else if (i < lines.length && !/^-{5,}/.test(lines[i])) {
 
             currentSection = lines[i].trim().toUpperCase();
 
